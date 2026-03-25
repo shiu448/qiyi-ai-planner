@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QIYI AI | 騏藝逸品社群規劃系統</title>
+<title>騏藝逸品｜社群貼文系統</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -59,24 +59,14 @@
   }
   .header-links a:hover { color: var(--gold); border-color: var(--gold); }
 
-  /* ── API SETTINGS ── */
-  .api-shell { max-width: 1200px; margin: 20px auto 0; padding: 0 32px; }
-  .api-panel {
-    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.03));
-    border: 1px solid rgba(201,168,76,0.22);
-    border-radius: 14px;
-    padding: 18px 20px;
-    display: grid;
-    grid-template-columns: 1.3fr 1fr auto;
-    gap: 12px;
-    align-items: end;
+  .api-key-input {
+    background: var(--dark3); border: 1px solid var(--border);
+    border-radius: 20px; color: var(--cream);
+    padding: 6px 14px; font-size: 12px; width: 220px;
+    font-family: inherit; transition: all .2s;
   }
-  .api-title { font-size: 14px; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
-  .api-sub { font-size: 12px; color: var(--cream2); line-height: 1.7; }
-  .api-status { font-size: 12px; color: var(--text-light); margin-top: 8px; }
-  .status-ok { color: #7EC8A0; }
-  .status-warn { color: #E8D5A0; }
-  .status-error { color: #E8956C; }
+  .api-key-input:focus { outline: none; border-color: var(--gold); }
+  @media(max-width: 600px) { .api-key-input { width: 140px; } }
 
   /* ── TABS ── */
   .tabs {
@@ -103,109 +93,350 @@
   /* ── SECTIONS ── */
   .section { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
   .section.active { display: block; }
-  .section-title { font-family: 'Noto Serif TC', serif; font-size: 22px; color: var(--gold); margin-bottom: 8px; font-weight: 600; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 22px;
+    color: var(--gold);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
   .section-sub { color: var(--text-light); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
 
-  /* ── CALENDAR ── */
+  /* ── CALENDAR GRID ── */
   .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   .month-label { font-family: 'Noto Serif TC', serif; font-size: 20px; color: var(--gold); font-weight: 600; }
-  .nav-btn { background: none; border: 1px solid var(--border); color: var(--gold); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+  .nav-btn {
+    background: none; border: 1px solid var(--border); color: var(--gold);
+    width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px;
+    transition: all .2s;
+  }
+  .nav-btn:hover { background: var(--border); }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  .cal-day-label { text-align: center; font-size: 12px; color: var(--text-light); padding: 8px 0; }
-  .cal-day { background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; min-height: 90px; padding: 8px; cursor: pointer; position: relative; }
+  .cal-day-label { text-align: center; font-size: 12px; color: var(--text-light); padding: 8px 0; font-weight: 500; }
+  .cal-day {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-height: 90px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
   .cal-day:hover { border-color: var(--gold); background: var(--dark3); }
+  .cal-day.today { border-color: var(--gold); }
+  .cal-day.has-post { background: linear-gradient(135deg, var(--dark2), #2A2015); }
+  .cal-day.empty { opacity: 0.2; cursor: default; }
+  .cal-day.empty:hover { border-color: var(--border); background: var(--dark2); }
   .day-num { font-size: 12px; color: var(--text-light); margin-bottom: 4px; font-weight: 600; }
-  .day-tag { font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-top: 3px; display: inline-block; }
-  .tag-consult { background: rgba(201,168,76,0.15); color: var(--gold); }
-  .tag-holiday { background: rgba(139,69,19,0.2); color: #E8956C; }
-  .tag-crystal { background: rgba(107,76,138,0.2); color: #C4A0E8; }
-  .tag-trend { background: rgba(58,107,76,0.2); color: #7EC8A0; }
+  .day-num.today-num { color: var(--gold); }
+  .day-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-top: 3px;
+    display: inline-block;
+    font-weight: 500;
+  }
+  .tag-consult { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .tag-holiday { background: rgba(139,69,19,0.2); color: #E8956C; border: 1px solid rgba(139,69,19,0.3); }
+  .tag-crystal { background: rgba(107,76,138,0.2); color: #C4A0E8; border: 1px solid rgba(107,76,138,0.3); }
+  .tag-trend { background: rgba(58,107,76,0.2); color: #7EC8A0; border: 1px solid rgba(58,107,76,0.3); }
+  .day-preview { font-size: 9px; color: var(--text-light); margin-top: 4px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .post-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); position: absolute; top: 8px; right: 8px; }
 
-  /* ── CARDS ── */
+  /* ── POST CARDS ── */
   .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
-  .post-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 22px; transition: all .2s; }
-  .card-title { font-family: 'Noto Serif TC', serif; font-size: 15px; color: var(--gold); margin-bottom: 10px; font-weight: 600; }
-  .card-body { font-size: 13px; color: var(--cream2); line-height: 1.7; margin-bottom: 14px; white-space: pre-line; }
-  .card-crystal { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: rgba(201,168,76,0.08); padding: 10px; border-radius: 8px; }
-
-  /* ── FORM ── */
-  .gen-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .gen-panel { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-  .form-group { margin-bottom: 16px; }
-  .form-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; display: block; }
-  .form-input, .form-select, .form-textarea { width: 100%; background: var(--dark3); border: 1px solid var(--border); border-radius: 8px; color: var(--cream); padding: 10px 14px; font-size: 13px; font-family: inherit; }
-  .btn-generate { width: 100%; padding: 14px; background: var(--gold); border: none; border-radius: 10px; color: var(--dark); font-weight: 700; cursor: pointer; }
-  .btn-generate:disabled { opacity: 0.6; cursor: wait; }
-  .output-area { background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-height: 200px; font-size: 13px; line-height: 1.8; white-space: pre-line; color: var(--cream2); }
-  .output-placeholder { color: var(--text-light); text-align: center; padding-top: 60px; }
-
-  /* ── STORIES ── */
-  .stories-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:20px; }
-  .story-card { background:var(--dark2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
-  .story-card-body { padding:16px 18px; }
-  .story-copy { background:var(--dark3); border:1px solid var(--border); border-radius:8px; padding:12px; font-size:13px; white-space:pre-line; margin-bottom:10px; }
-  .shot-item { background:var(--dark3); border-radius:8px; padding:8px; font-size:12px; }
-
-  .output-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-  .output-tab {
-    padding: 6px 16px; border-radius: 20px; font-size: 12px;
-    cursor: pointer; border: 1px solid var(--border); color: var(--text-light); background: none; font-family: inherit;
+  .post-card {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    transition: all .2s;
   }
-  .output-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+  .post-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .card-date { font-size: 12px; color: var(--text-light); }
+  .card-type-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600;
+  }
+  .card-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 15px;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .card-body { font-size: 13px; color: var(--cream2); line-height: 1.7; margin-bottom: 14px; white-space: pre-line; }
+  .card-hashtags { font-size: 12px; color: var(--gold-light); opacity: 0.7; }
+  .card-crystal { 
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    background: rgba(201,168,76,0.08); border-radius: 8px; padding: 10px 12px;
+  }
+  .crystal-emoji { font-size: 18px; }
+  .crystal-info { font-size: 12px; }
+  .crystal-name { color: var(--gold); font-weight: 600; }
+  .crystal-why { color: var(--text-light); margin-top: 2px; }
+  .card-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-copy {
+    flex: 1; padding: 8px 14px; background: none; border: 1px solid var(--border);
+    color: var(--cream); border-radius: 8px; cursor: pointer; font-size: 12px;
+    transition: all .2s; font-family: inherit;
+  }
+  .btn-copy:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-ver2 {
+    padding: 8px 14px; background: none; border: 1px solid rgba(107,76,138,0.4);
+    color: #C4A0E8; border-radius: 8px; cursor: pointer; font-size: 12px;
+    transition: all .2s; font-family: inherit;
+  }
+  .btn-ver2:hover { border-color: #C4A0E8; background: rgba(107,76,138,0.1); }
 
-  /* Toast */
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark2); border: 1px solid var(--gold); color: var(--gold); padding: 12px 20px; border-radius: 8px; opacity: 0; transition: .3s; z-index: 9999; }
-  .toast.show { opacity: 1; }
-
+  /* ── GENERATOR ── */
+  .gen-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media(max-width: 768px) { .gen-layout { grid-template-columns: 1fr; } }
+  .gen-panel {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .gen-panel-title { font-size: 14px; color: var(--gold); font-weight: 600; margin-bottom: 18px; letter-spacing: 1px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; display: block; font-weight: 500; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--dark3);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--cream); padding: 10px 14px; font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: border-color .2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none; border-color: var(--gold);
+  }
+  .form-select option { background: var(--dark2); }
+  .form-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px; padding: 30px 20px;
+    text-align: center; cursor: pointer;
+    transition: all .2s; position: relative;
+  }
+  .upload-zone:hover { border-color: var(--gold); }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--text-light); }
+  .upload-text strong { color: var(--gold); }
+  .preview-img { max-width: 100%; border-radius: 8px; margin-top: 12px; display: none; }
+  .btn-generate {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, var(--gold), #A8882A);
+    border: none; border-radius: 10px; color: var(--dark); font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: 'Noto Sans TC', sans-serif;
+    transition: all .2s; margin-top: 8px;
+    letter-spacing: 1px;
+  }
+  .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.3); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .output-area {
+    background: var(--dark3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; min-height: 200px;
+    font-size: 13px; line-height: 1.8; white-space: pre-line;
+    color: var(--cream2); position: relative;
+  }
+  .output-placeholder { color: var(--text-light); font-size: 13px; text-align: center; padding-top: 60px; }
   .loading-dots { display: inline-flex; gap: 4px; }
-  .loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: blink 1.2s infinite; }
+  .loading-dots span {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--gold);
+    animation: blink 1.2s infinite;
+  }
   .loading-dots span:nth-child(2) { animation-delay: .2s; }
   .loading-dots span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100% { opacity:.2; } 40% { opacity:1; } }
+  .output-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-sm {
+    padding: 8px 16px; border-radius: 8px; font-size: 12px;
+    cursor: pointer; font-family: inherit; transition: all .2s;
+    font-weight: 500;
+  }
+  .btn-gold { background: none; border: 1px solid var(--gold); color: var(--gold); }
+  .btn-gold:hover { background: rgba(201,168,76,0.1); }
+  .btn-purple { background: none; border: 1px solid rgba(107,76,138,0.5); color: #C4A0E8; }
+  .btn-purple:hover { background: rgba(107,76,138,0.1); }
+  .output-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .output-tab {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px;
+    cursor: pointer; border: 1px solid var(--border); color: var(--text-light);
+    transition: all .2s; background: none; font-family: inherit;
+  }
+  .output-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
 
-  @media(max-width: 768px) { .gen-layout, .api-panel { grid-template-columns: 1fr; } }
+  /* ── STRATEGY ── */
+  .strategy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+  .strategy-card {
+    background: var(--dark2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px;
+  }
+  .strategy-card-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 15px; color: var(--gold); font-weight: 600;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .strategy-card-body { font-size: 13px; color: var(--cream2); line-height: 1.7; }
+  .strategy-card-body li { margin-left: 16px; margin-bottom: 6px; }
+  .divider {
+    height: 1px; background: var(--border); margin: 28px 0;
+  }
+  .tip-box {
+    background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
+  }
+  .tip-box-title { font-size: 13px; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+  .tip-box-body { font-size: 13px; color: var(--cream2); line-height: 1.7; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--dark2); border: 1px solid var(--gold);
+    color: var(--gold); padding: 12px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; opacity: 0;
+    transition: opacity .3s; z-index: 9999;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ── VERSION BADGE ── */
+  .ver-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 600; vertical-align: middle; margin-left: 6px;
+  }
+  .ver1 { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .ver2 { background: rgba(107,76,138,0.2); color: #C4A0E8; border: 1px solid rgba(107,76,138,0.3); }
+
+  /* ── STORIES TAB ── */
+  .analysis-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+  @media(max-width:900px){ .analysis-grid{ grid-template-columns:1fr; } }
+  .analysis-card {
+    background: var(--dark2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; position: relative; overflow: hidden;
+  }
+  .analysis-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .analysis-card.best::before { background: linear-gradient(90deg, var(--gold), #E8D580); }
+  .analysis-card.mid::before { background: linear-gradient(90deg, #7EC8A0, #4A9B78); }
+  .analysis-card.low::before { background: linear-gradient(90deg, #C4A0E8, #8B68C4); }
+  .analysis-card-label { font-size: 11px; color: var(--text-light); margin-bottom: 10px; font-weight: 600; letter-spacing: 1px; }
+  .analysis-card-title { font-family:'Noto Serif TC',serif; font-size:14px; color:var(--cream); margin-bottom:14px; line-height:1.5; font-weight:600; }
+  .stat-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .stat-label { font-size:12px; color:var(--text-light); }
+  .stat-val { font-size:16px; color:var(--gold); font-weight:700; }
+  .stat-bar { height:4px; background:var(--dark3); border-radius:2px; margin-top:2px; overflow:hidden; }
+  .stat-bar-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--gold),#E8D580); }
+  .insight-badge {
+    display:inline-block; font-size:11px; padding:3px 10px; border-radius:12px;
+    background:rgba(201,168,76,0.12); color:var(--gold); border:1px solid rgba(201,168,76,0.25);
+    margin-top:10px; font-weight:600;
+  }
+  .insight-badge.green { background:rgba(126,200,160,0.12); color:#7EC8A0; border-color:rgba(126,200,160,0.25); }
+
+  .stories-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:20px; }
+  .story-card {
+    background:var(--dark2); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .story-card-header {
+    padding:16px 18px 12px;
+    border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .story-type-row { display:flex; align-items:center; gap:8px; }
+  .story-icon { font-size:22px; }
+  .story-card-title { font-family:'Noto Serif TC',serif; font-size:14px; color:var(--gold); font-weight:600; line-height:1.4; }
+  .story-card-body { padding:16px 18px; }
+  .story-section-label {
+    font-size:11px; color:var(--text-light); font-weight:700;
+    letter-spacing:1.5px; margin-bottom:8px; margin-top:14px;
+    text-transform:uppercase;
+  }
+  .story-section-label:first-child { margin-top:0; }
+  .story-copy {
+    background:var(--dark3); border:1px solid var(--border);
+    border-radius:8px; padding:12px 14px;
+    font-size:13px; color:var(--cream2); line-height:1.7;
+    white-space:pre-line; margin-bottom:6px;
+  }
+  .story-tip-list { list-style:none; padding:0; }
+  .story-tip-list li {
+    font-size:13px; color:var(--cream2); line-height:1.6;
+    padding:6px 0; border-bottom:1px solid rgba(201,168,76,0.08);
+    padding-left:18px; position:relative;
+  }
+  .story-tip-list li::before { content:'▸'; position:absolute; left:0; color:var(--gold); font-size:11px; top:8px; }
+  .story-tip-list li:last-child { border-bottom:none; }
+  .story-shot-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .shot-item {
+    background:var(--dark3); border:1px solid var(--border);
+    border-radius:8px; padding:10px 12px;
+    font-size:12px; color:var(--cream2); line-height:1.5;
+  }
+  .shot-item strong { color:var(--gold); display:block; margin-bottom:3px; font-size:11px; }
+  .story-formula {
+    background:rgba(201,168,76,0.07); border:1px solid rgba(201,168,76,0.2);
+    border-radius:8px; padding:12px 14px;
+  }
+  .formula-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .formula-piece {
+    font-size:12px; padding:4px 12px; border-radius:20px;
+    background:var(--dark3); border:1px solid var(--border); color:var(--cream);
+  }
+  .formula-plus { color:var(--gold); font-size:14px; font-weight:700; }
+  .story-card-footer { padding:12px 18px; border-top:1px solid var(--border); display:flex; gap:8px; }
+
+  .story-type-btn {
+    background: var(--dark3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 10px; text-align: center;
+    cursor: pointer; transition: all .2s; color: var(--cream);
+  }
+  .story-type-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .story-type-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.12); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark2); }
+  ::-webkit-scrollbar-thumb { background: var(--dark3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">騏藝逸品 QIYI Crystal <span>AI 社群整合系統</span></div>
-  <div class="header-links">
-    <a href="https://www.instagram.com/qiyicrystal/" target="_blank">📸 IG</a>
+  <div>
+    <div class="logo">騏藝逸品 QIYI Crystal
+      <span>社群貼文規劃系統</span>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <input type="password" id="googleApiKey" class="api-key-input" placeholder="輸入 Google API Key" onchange="localStorage.setItem('qiyi_api_key', this.value)" />
+    <div class="header-links">
+      <a href="https://www.instagram.com/qiyicrystal/" target="_blank">📸 IG</a>
+      <a href="https://www.facebook.com/people/%E9%A8%8F%E8%97%9D%E9%80%B8%E5%93%81-Qi-Yi-Crystal/61556083324281/" target="_blank">📘 FB</a>
+    </div>
   </div>
 </header>
 
-<!-- API KEY SETTINGS -->
-<div class="api-shell">
-  <div class="api-panel">
-    <div>
-      <div class="api-title">🔐 Google Gemini API 設定</div>
-      <div class="api-sub">請輸入您的 Google Gemini API Key。金鑰將儲存於您的瀏覽器本地。</div>
-      <div class="api-status" id="apiKeyStatus">尚未設定金鑰</div>
-    </div>
-    <div>
-      <label class="form-label">Google API Key *</label>
-      <input class="form-input" id="googleApiKey" type="password" placeholder="貼上您的 API Key" />
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn-generate" style="padding:10px 20px; margin:0;" onclick="saveApiKey()">儲存</button>
-      <button class="btn-generate" style="padding:10px 20px; margin:0; background:none; border:1px solid var(--border); color:var(--gold);" onclick="clearApiKey()">清除</button>
-    </div>
-  </div>
-</div>
-
 <div class="tabs">
   <div class="tab active" onclick="showTab('calendar')">📅 貼文日曆</div>
-  <div class="tab" onclick="showTab('posts')">✍️ 貼文庫</div>
-  <div class="tab" onclick="showTab('stories')">📱 限動模板</div>
-  <div class="tab" onclick="showTab('generator')">🤖 AI 產生器</div>
+  <div class="tab" onclick="showTab('posts')">✍️ 貼文庫（3月–4月）</div>
+  <div class="tab" onclick="showTab('stories')">📱 限時動態系統</div>
+  <div class="tab" onclick="showTab('generator')">🤖 AI 貼文產生器</div>
   <div class="tab" onclick="showTab('strategy')">🎯 發文策略</div>
 </div>
 
-<!-- SECTION: CALENDAR -->
+<!-- ════════════════ TAB 1: CALENDAR ════════════════ -->
 <div id="tab-calendar" class="section active">
-  <div class="section-title">貼文規劃日曆</div>
+  <div class="section-title">貼文日曆</div>
+  <div class="section-sub">點選日期查看預計貼文主題 ｜ 金框 = 今天 ｜ 標色點 = 已有安排貼文</div>
   <div class="calendar-header">
     <button class="nav-btn" onclick="prevMonth()">‹</button>
     <div class="month-label" id="monthLabel"></div>
@@ -214,63 +445,417 @@
   <div class="cal-grid" id="calGrid"></div>
 </div>
 
-<!-- SECTION: POSTS -->
+<!-- ════════════════ TAB 2: POST LIBRARY ════════════════ -->
 <div id="tab-posts" class="section">
-  <div class="section-title">3-4月 預設貼文庫</div>
+  <div class="section-title">3月25日 – 4月30日 貼文庫</div>
+  <div class="section-sub">每篇提供兩版本：版本 A（顧問型）｜版本 B（感性共鳴型）。建議水晶品項已附上，點「複製」可直接使用。</div>
+
+  <div class="tip-box">
+    <div class="tip-box-title">💡 本期發文節日 & 趨勢重點</div>
+    <div class="tip-box-body">
+      清明連假（4/3–6）｜兒童節（4/4）｜世界地球日（4/22）｜母親節備戰期（5月倒數）｜春天換季情緒期（焦慮/重啟）｜2025 流行趨勢：生命靈數客製、當下狀態選物、儀式感內容
+    </div>
+  </div>
+
   <div class="posts-grid" id="postsGrid"></div>
 </div>
 
-<!-- SECTION: STORIES -->
-<div id="tab-stories" class="section">
-  <div class="section-title">12 篇限動模板與文案</div>
-  <div class="stories-grid" id="storiesGrid"></div>
-</div>
-
-<!-- SECTION: GENERATOR -->
+<!-- ════════════════ TAB 3: GENERATOR ════════════════ -->
 <div id="tab-generator" class="section">
-  <div class="section-title">AI 內容產生器</div>
+  <div class="section-title">AI 貼文產生器</div>
+  <div class="section-sub">丟入照片 + 品項名稱，AI 自動生成兩版貼文（顧問型 & 感性型），適用 IG / FB。</div>
+
   <div class="gen-layout">
-    <div class="gen-panel">
-      <div class="form-group">
-        <label class="form-label">水晶品項 *</label>
-        <input class="form-input" id="crystalName" placeholder="例：粉晶手串" />
+    <div>
+      <div class="gen-panel">
+        <div class="gen-panel-title">📷 上傳照片 & 輸入資訊</div>
+
+        <div class="form-group">
+          <label class="form-label">水晶照片（選填）</label>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(this)">
+            <div class="upload-icon">🔮</div>
+            <div class="upload-text">點此上傳照片<br><strong>或拖曳圖片至此</strong></div>
+          </div>
+          <img id="previewImg" class="preview-img" alt="預覽">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">水晶品項名稱 *</label>
+          <input class="form-input" id="crystalName" placeholder="例：粉晶手串、黃水晶晶洞、紫晶球…" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">主打功效 / 狀態</label>
+          <select class="form-select" id="crystalEffect">
+            <option value="情緒安定、保護、放鬆">🌙 穩住自己 — 情緒安定、保護</option>
+            <option value="財運、事業、行動力">💰 打開運勢 — 財運、事業氣場</option>
+            <option value="桃花、感情、人際關係">💕 關係升溫 — 桃花、感情</option>
+            <option value="轉換、重啟、成長">🌱 重新開始 — 轉換、重啟</option>
+            <option value="">✏️ 自訂…</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">自訂功效說明（選填）</label>
+          <input class="form-input" id="customEffect" placeholder="例：增強自信、招貴人、改善睡眠…" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">節日 / 趨勢結合（選填）</label>
+          <select class="form-select" id="holidayTag">
+            <option value="">無</option>
+            <option value="清明連假">清明連假（4/3–6）</option>
+            <option value="兒童節">兒童節（4/4）</option>
+            <option value="世界地球日">世界地球日（4/22）</option>
+            <option value="母親節">母親節備戰</option>
+            <option value="春天換季">春天換季情緒</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">補充說明（選填）</label>
+          <textarea class="form-textarea" id="extraNotes" placeholder="例：這款是限量款、適合送禮、目前特別推薦…"></textarea>
+        </div>
+
+        <button class="btn-generate" id="genBtn" onclick="generatePost()">✨ 生成貼文（兩版）</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">主要功效 / 狀態方向</label>
-        <select class="form-select" id="crystalEffect">
-          <option value="情緒安定、穩住自己">🌙 穩住自己 (情緒安定)</option>
-          <option value="財運、事業、行動力">💰 打開運勢 (財運事業)</option>
-          <option value="桃花、感情、人際關係">💕 關係升溫 (桃花感情)</option>
-          <option value="重啟、轉換、新開始">🌱 重新開始 (轉換能量)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">補充說明 (如：適合送禮、今日到貨等)</label>
-        <textarea class="form-textarea" id="extraNotes"></textarea>
-      </div>
-      <button class="btn-generate" id="genBtn" onclick="generatePost()">✨ 生成雙版本貼文</button>
     </div>
-    <div class="gen-panel">
-      <div class="output-tabs">
-        <button class="output-tab active" id="tabV1btn" onclick="switchOutput('v1')">顧問型</button>
-        <button class="output-tab" id="tabV2btn" onclick="switchOutput('v2')">感性型</button>
+
+    <div>
+      <div class="gen-panel">
+        <div class="gen-panel-title">📝 生成結果</div>
+
+        <div class="output-tabs">
+          <button class="output-tab active" id="tabV1btn" onclick="switchOutput('v1')">版本 A — 顧問型</button>
+          <button class="output-tab" id="tabV2btn" onclick="switchOutput('v2')">版本 B — 感性型</button>
+        </div>
+
+        <div class="output-area" id="outputV1">
+          <div class="output-placeholder">填入左側資訊後，點「生成貼文」即可自動產出 ✨</div>
+        </div>
+        <div class="output-area" id="outputV2" style="display:none">
+          <div class="output-placeholder">填入左側資訊後，點「生成貼文」即可自動產出 ✨</div>
+        </div>
+
+        <div class="output-actions">
+          <button class="btn-sm btn-gold" onclick="copyOutput()">複製貼文</button>
+          <button class="btn-sm btn-purple" onclick="regenerate()">🔄 重新生成</button>
+        </div>
       </div>
-      <div class="output-area" id="outputV1"><div class="output-placeholder">填入左側資訊後點擊生成</div></div>
-      <div class="output-area" id="outputV2" style="display:none"><div class="output-placeholder">填入左側資訊後點擊生成</div></div>
-      <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); margin-top:16px;" onclick="copyOutput()">複製當前內容</button>
     </div>
   </div>
 </div>
 
-<!-- SECTION: STRATEGY -->
+<!-- ════════════════ TAB 3: STORIES ════════════════ -->
+<div id="tab-stories" class="section">
+  <div class="section-title">限時動態系統</div>
+  <div class="section-sub">根據你近期三篇高表現限動分析出的公式，加上 12 篇模板文案 + 拍攝技巧。</div>
+
+  <!-- 數據分析 -->
+  <div style="font-family:'Noto Serif TC',serif; font-size:16px; color:var(--gold); margin-bottom:16px; font-weight:600;">📊 近期三篇高觸及限動分析</div>
+  <div class="analysis-grid">
+    <div class="analysis-card best">
+      <div class="analysis-card-label">🥇 最高觸及</div>
+      <div class="analysis-card-title">今天營業到18:00 歡迎來逛逛喔</div>
+      <div class="stat-row"><span class="stat-label">瀏覽次數</span><span class="stat-val">177</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:100%"></div></div>
+      <div class="stat-row" style="margin-top:8px"><span class="stat-label">觸及人數</span><span class="stat-val">155</span></div>
+      <div class="stat-row"><span class="stat-label">互動次數</span><span class="stat-val">2</span></div>
+      <div class="stat-row"><span class="stat-label">新追蹤者</span><span class="stat-val">+1</span></div>
+      <div class="insight-badge">✓ 照片質感 × 親切口吻 = 勝</div>
+    </div>
+    <div class="analysis-card mid">
+      <div class="analysis-card-label">🥈 第二名</div>
+      <div class="analysis-card-title">銀曜石 × 硃砂 手串｜黑與紅的對比，低調卻很有氣場</div>
+      <div class="stat-row"><span class="stat-label">瀏覽次數</span><span class="stat-val">165</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:93%"></div></div>
+      <div class="stat-row" style="margin-top:8px"><span class="stat-label">觸及人數</span><span class="stat-val">145</span></div>
+      <div class="stat-row"><span class="stat-label">互動次數</span><span class="stat-val">0</span></div>
+      <div class="stat-row"><span class="stat-label">類型</span><span style="font-size:12px;color:var(--cream2)">Instagram</span></div>
+      <div class="insight-badge green">✓ 品項組合 × 風格描述語 = 吸睛</div>
+    </div>
+    <div class="analysis-card low">
+      <div class="analysis-card-label">🥉 第三名</div>
+      <div class="analysis-card-title">拉長石貔貅｜拉長石的靈動光澤，搭配貔貅的守財象徵</div>
+      <div class="stat-row"><span class="stat-label">瀏覽次數</span><span class="stat-val">151</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:85%"></div></div>
+      <div class="stat-row" style="margin-top:8px"><span class="stat-label">觸及人數</span><span class="stat-val">138</span></div>
+      <div class="stat-row"><span class="stat-label">互動次數</span><span class="stat-val">0</span></div>
+      <div class="stat-row"><span class="stat-label">類型</span><span style="font-size:12px;color:var(--cream2)">Instagram</span></div>
+      <div class="insight-badge" style="background:rgba(196,160,232,0.12);color:#C4A0E8;border-color:rgba(196,160,232,0.25)">✓ 雕件特寫 × 功效關鍵字 = 有效</div>
+    </div>
+  </div>
+
+  <!-- 規律分析 -->
+  <div class="tip-box" style="margin-bottom:28px">
+    <div class="tip-box-title">🔍 從三篇高觸及限動，歸納出你的限動公式</div>
+    <div class="tip-box-body">
+      <strong style="color:var(--gold)">①&nbsp;主角清晰：</strong>每篇都有一個明確「主角」——不是一堆商品，是一顆或一套。觀眾的眼睛才有地方停。<br>
+      <strong style="color:var(--gold)">②&nbsp;文字極短，但有畫面感：</strong>「黑與紅的對比，低調卻很有氣場」只有 14 字，卻讓人腦中有畫面。<br>
+      <strong style="color:var(--gold)">③&nbsp;照片質感主導點擊：</strong>第一篇（紫晶洞實品照）觸及最高，說明高質感照片是限動觸及的第一門票。<br>
+      <strong style="color:var(--gold)">④&nbsp;親切 CTA 有效：</strong>「歡迎來逛逛喔」這類溫暖邀請句，觸及比純商品展示更高。<br>
+      <strong style="color:var(--gold)">⑤&nbsp;互動率偏低：</strong>三篇互動次數合計只有 2，說明目前限動缺乏「問答框、投票、引導私訊」這類互動元素，這是下一步要改善的方向。
+    </div>
+  </div>
+
+  <!-- 限動公式 -->
+  <div style="font-family:'Noto Serif TC',serif; font-size:16px; color:var(--gold); margin-bottom:16px; font-weight:600;">⚡ 建議限動公式（3 種類型）</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-bottom:32px;">
+    <div class="story-formula">
+      <div style="font-size:12px;color:var(--text-light);font-weight:700;letter-spacing:1px;margin-bottom:10px">TYPE A｜日常開店型</div>
+      <div class="formula-row">
+        <span class="formula-piece">🔮 質感水晶照</span>
+        <span class="formula-plus">+</span>
+        <span class="formula-piece">短感受語</span>
+        <span class="formula-plus">+</span>
+        <span class="formula-piece">溫暖 CTA</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-light);margin-top:10px">例：「今天這顆紫晶花好美，歡迎來看看 ✨」</div>
+    </div>
+    <div class="story-formula">
+      <div style="font-size:12px;color:var(--text-light);font-weight:700;letter-spacing:1px;margin-bottom:10px">TYPE B｜品項介紹型</div>
+      <div class="formula-row">
+        <span class="formula-piece">品項名稱</span>
+        <span class="formula-plus">+</span>
+        <span class="formula-piece">視覺風格描述</span>
+        <span class="formula-plus">+</span>
+        <span class="formula-piece">能量/功效一句</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-light);margin-top:10px">例：「黃水晶晶柱 × 溫暖金色光芒，招財聚氣最適合辦公桌 💛」</div>
+    </div>
+    <div class="story-formula">
+      <div style="font-size:12px;color:var(--text-light);font-weight:700;letter-spacing:1px;margin-bottom:10px">TYPE C｜互動提升型 🆕</div>
+      <div class="formula-row">
+        <span class="formula-piece">狀態提問</span>
+        <span class="formula-plus">+</span>
+        <span class="formula-piece">投票框 or 問答框</span>
+        <span class="formula-plus">+</span>
+        <span class="formula-piece">引導私訊</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-light);margin-top:10px">例：「你最近最需要哪種能量？🔘 穩定情緒 🔘 衝事業」</div>
+    </div>
+  </div>
+
+  <!-- AI 限動文案生成器 -->
+  <div style="font-family:'Noto Serif TC',serif; font-size:16px; color:var(--gold); margin-bottom:8px; font-weight:600; margin-top:8px;">🤖 限動文案 AI 生成器</div>
+  <div style="font-size:13px; color:var(--text-light); margin-bottom:20px;">選擇限動類型 → 填入品項 → 一鍵生成對應文案，直接複製貼上 IG/FB 限時動態。</div>
+
+  <div class="gen-layout">
+    <div>
+      <div class="gen-panel">
+        <div class="gen-panel-title">⚙️ 設定限動類型 & 內容</div>
+
+        <!-- TYPE 選擇 -->
+        <div class="form-group">
+          <label class="form-label">限動類型 *</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;" id="storyTypeGrid">
+            <div class="story-type-btn active" data-type="open" onclick="selectStoryType(this,'open')">
+              <div style="font-size:18px">🏪</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">日常開店</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">今日營業 / 到貨</div>
+            </div>
+            <div class="story-type-btn" data-type="product" onclick="selectStoryType(this,'product')">
+              <div style="font-size:18px">💎</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">品項介紹</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">單品聚焦展示</div>
+            </div>
+            <div class="story-type-btn" data-type="interact" onclick="selectStoryType(this,'interact')">
+              <div style="font-size:18px">💬</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">互動提升</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">投票 / 問答 / 引導</div>
+            </div>
+            <div class="story-type-btn" data-type="emotion" onclick="selectStoryType(this,'emotion')">
+              <div style="font-size:18px">🌙</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">情緒共感</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">狀態共鳴 / 夜晚系</div>
+            </div>
+            <div class="story-type-btn" data-type="gift" onclick="selectStoryType(this,'gift')">
+              <div style="font-size:18px">🎁</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">送禮場景</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">節日 / 禮盒推薦</div>
+            </div>
+            <div class="story-type-btn" data-type="knowledge" onclick="selectStoryType(this,'knowledge')">
+              <div style="font-size:18px">📖</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">知識教學</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">淨化 / 搭配知識</div>
+            </div>
+            <div class="story-type-btn" data-type="newstock" onclick="selectStoryType(this,'newstock')">
+              <div style="font-size:18px">📦</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">新貨到場</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">開箱 / 稀缺感</div>
+            </div>
+            <div class="story-type-btn" data-type="numerology" onclick="selectStoryType(this,'numerology')">
+              <div style="font-size:18px">🔢</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px">生命靈數</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:2px">空缺數配對</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">水晶品項名稱（選填）</label>
+          <input class="form-input" id="storyItemName" placeholder="例：紫晶洞、粉晶手串、拉長石貔貅…" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">功效 / 能量方向</label>
+          <select class="form-select" id="storyEffect">
+            <option value="情緒安定、保護能量">🌙 穩住自己 — 情緒安定</option>
+            <option value="財運、事業、行動力">💛 打開運勢 — 財運氣場</option>
+            <option value="桃花、感情、人際">💕 關係升溫 — 桃花感情</option>
+            <option value="轉換、重啟、新開始">🌱 重新開始 — 轉換重啟</option>
+            <option value="不指定，依品項判斷">✨ 不指定，依品項判斷</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">節日 / 特殊情境（選填）</label>
+          <select class="form-select" id="storyHoliday">
+            <option value="">無</option>
+            <option value="清明連假">清明連假</option>
+            <option value="母親節">母親節備戰</option>
+            <option value="世界地球日">世界地球日</option>
+            <option value="春天換季">春天換季情緒</option>
+            <option value="週末">週末放鬆感</option>
+            <option value="週一收假">週一收假情緒</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">補充說明（選填）</label>
+          <textarea class="form-textarea" id="storyExtra" placeholder="例：今天限量、剛到新貨、特別適合送媽媽…" style="min-height:60px"></textarea>
+        </div>
+
+        <button class="btn-generate" id="storyGenBtn" onclick="generateStory()">✨ 生成限動文案（三版）</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="gen-panel" style="height:100%">
+        <div class="gen-panel-title">📱 限動文案輸出</div>
+
+        <div class="output-tabs">
+          <button class="output-tab active" id="stTabV1btn" onclick="switchStoryOutput('sv1')">版本 A — 顧問型</button>
+          <button class="output-tab" id="stTabV2btn" onclick="switchStoryOutput('sv2')">版本 B — 感性型</button>
+          <button class="output-tab" id="stTabV3btn" onclick="switchStoryOutput('sv3')">版本 C — 互動型</button>
+        </div>
+
+        <div class="output-area" id="outputSV1" style="min-height:160px">
+          <div class="output-placeholder">選擇類型後點「生成」即可 ✨</div>
+        </div>
+        <div class="output-area" id="outputSV2" style="display:none;min-height:160px">
+          <div class="output-placeholder">選擇類型後點「生成」即可 ✨</div>
+        </div>
+        <div class="output-area" id="outputSV3" style="display:none;min-height:160px">
+          <div class="output-placeholder">選擇類型後點「生成」即可 ✨</div>
+        </div>
+
+        <!-- 互動建議 -->
+        <div id="storyInteractSuggestion" style="display:none; margin-top:14px;">
+          <div style="font-size:11px;color:var(--text-light);font-weight:700;letter-spacing:1px;margin-bottom:8px">🎯 IG 互動元素建議</div>
+          <div id="storyInteractContent" style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--cream2);line-height:1.7;"></div>
+        </div>
+
+        <div class="output-actions" style="margin-top:14px">
+          <button class="btn-sm btn-gold" onclick="copyStoryOutput()">複製此版本</button>
+          <button class="btn-sm btn-purple" onclick="generateStory()">🔄 重新生成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 12 Stories -->
+  <div style="font-family:'Noto Serif TC',serif; font-size:16px; color:var(--gold); margin-bottom:16px; font-weight:600;">📋 12 篇限動模板（文案 + 拍攝技巧）</div>
+  <div class="stories-grid" id="storiesGrid"></div>
+</div>
+
+<!-- ════════════════ TAB 4: GENERATOR ════════════════ -->
 <div id="tab-strategy" class="section">
-  <div class="section-title">品牌發文策略</div>
-  <div class="gen-panel">
-    <div class="card-title" style="margin-bottom:12px; color:var(--gold);">品牌定位：人生狀態顧問型</div>
-    <div class="card-body">
-      1. **狀態共感文 (40%)**：不賣產品，先聊「你最近怎麼了」。<br>
-      2. **顧問式產品文 (45%)**：先說適合的人，再說為什麼是這顆水晶。<br>
-      3. **知識案例文 (15%)**：淨化方法、客人反饋、生命靈數解析。
+  <div class="section-title">發文策略 & 內容框架</div>
+  <div class="section-sub">根據騏藝逸品品牌定位：「人生狀態顧問型水晶品牌」，建立三類內容支柱。</div>
+
+  <div class="tip-box">
+    <div class="tip-box-title">🎯 品牌發文核心定位</div>
+    <div class="tip-box-body">
+      騏藝逸品的 IG / FB 不是在「賣水晶」，而是在幫人「理解自己的狀態」。<br>
+      每一篇貼文的目標：<strong style="color:var(--gold)">先讓人感覺被理解，然後才是產品</strong>。
+    </div>
+  </div>
+
+  <div class="strategy-grid">
+    <div class="strategy-card">
+      <div class="strategy-card-title">🌀 柱一：狀態共感文</div>
+      <div class="strategy-card-body">
+        每週 2 篇，佔總量 40%<br><br>
+        <ul>
+          <li>不直接提產品</li>
+          <li>從「你最近怎麼了」出發</li>
+          <li>例：「最近很累、很散、很焦慮的人，這篇給你」</li>
+          <li>結尾引導：「想知道什麼狀態適合什麼水晶，可以私訊我」</li>
+        </ul>
+      </div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-card-title">💎 柱二：顧問式產品文</div>
+      <div class="strategy-card-body">
+        每週 2–3 篇，佔總量 45%<br><br>
+        <ul>
+          <li>先說「什麼人」適合</li>
+          <li>再說「為什麼」這顆水晶</li>
+          <li>最後才說品項 + 購買資訊</li>
+          <li>附上搭配建議或使用方式</li>
+        </ul>
+      </div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-card-title">📖 柱三：真實案例 / 知識文</div>
+      <div class="strategy-card-body">
+        每週 1–2 篇，佔總量 15%<br><br>
+        <ul>
+          <li>客人案例（不露臉、匿名）</li>
+          <li>搭配原因說明</li>
+          <li>水晶基礎知識（淨化方法等）</li>
+          <li>建立「懂水晶的顧問」形象</li>
+        </ul>
+      </div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-card-title">🎉 節日 / 趨勢配合</div>
+      <div class="strategy-card-body">
+        配合時節融入內容，增加搜尋曝光<br><br>
+        <ul>
+          <li><strong style="color:var(--gold)">清明</strong>：掃墓前後的能量清理</li>
+          <li><strong style="color:var(--gold)">兒童節</strong>：送孩子的第一顆水晶</li>
+          <li><strong style="color:var(--gold)">地球日</strong>：水晶來自大地的故事</li>
+          <li><strong style="color:var(--gold)">母親節備戰</strong>：送媽媽什麼最合適</li>
+          <li><strong style="color:var(--gold)">春換季</strong>：換季焦慮 × 重啟能量</li>
+        </ul>
+      </div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-card-title">🏷️ 推薦 Hashtag 框架</div>
+      <div class="strategy-card-body">
+        固定標籤（每篇必加）：<br>
+        <span style="color:var(--gold)">#騏藝逸品 #QIYICrystal #水晶顧問 #台中水晶</span><br><br>
+        狀態標籤（按內容選）：<br>
+        <span style="color:#C4A0E8">#穩住自己 #打開運勢 #關係升溫 #重新開始</span><br><br>
+        流量標籤（擴散用）：<br>
+        <span style="color:#7EC8A0">#水晶手串 #水晶推薦 #能量水晶 #水晶功效</span>
+      </div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-card-title">⏰ 建議發文時間</div>
+      <div class="strategy-card-body">
+        <ul>
+          <li><strong style="color:var(--gold)">週一早上 8–9點</strong>：週間狀態共感文（收假情緒）</li>
+          <li><strong style="color:var(--gold)">週三晚上 8–9點</strong>：週中顧問式產品文</li>
+          <li><strong style="color:var(--gold)">週五晚上 7–8點</strong>：週末前情緒型 / 節日結合文</li>
+          <li><strong style="color:var(--gold)">週日下午 3–5點</strong>：知識型 / 案例型（假日閒情）</li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
@@ -278,175 +863,405 @@
 <div class="toast" id="toast">✓ 已複製到剪貼簿</div>
 
 <script>
-// ── DATA: POSTS ──
+// ── DATA ──
 const postData = [
-  { date: "2025-03-26", type: "consult", typeLabel: "顧問型", title: "為什麼你買了很多水晶，但感覺還是沒變？", crystal: "黑碧璽 + 白水晶", v1: "你最近有沒有這種感覺——明明買了好幾條手串，卻還是覺得「沒什麼用」？問題往往不是水晶沒效，而是你選的方向跟你現在的狀態對不上。水晶不是許願池，是「狀態的輔助工具」。先搞清楚你最近最缺的是什麼，再來選。", v2: "買了好多水晶，卻好像什麼都沒改變？或許不是水晶的問題，是你還沒找到那顆「剛好對的」。水晶最神奇的地方，不是它有多厲害，而是當你帶著它的時候，你會開始願意相信自己。" },
-  { date: "2025-03-28", type: "crystal", typeLabel: "品項型", title: "睡不好、心很散？這顆是你現在需要的", crystal: "紫水晶球", v1: "如果你最近常常睡到一半醒來，或者腦袋停不下來，思緒很亂——這是身體在告訴你：你的能量需要整理了。紫水晶是我最常推薦「情緒安定線」的首選。", v2: "有些夜晚特別難熬。思緒停不下來，睡了又醒，好像心裡一直有什麼東西沒放下。紫水晶不會幫你解決問題，但它會陪你安靜下來。" }
+  {
+    date: "2025-03-26",
+    type: "consult",
+    typeLabel: "顧問型",
+    title: "為什麼你買了很多水晶，但感覺還是沒變？",
+    crystal: { emoji: "🌙", name: "黑碧璽 + 白水晶", why: "阻擋負能量進入，先清場才能接收新能量" },
+    v1: `你最近有沒有這種感覺——
+明明買了好幾條手串，卻還是覺得「沒什麼用」？
+
+問題往往不是水晶沒效，而是你選的方向跟你現在的狀態對不上。
+
+水晶不是許願池，是「狀態的輔助工具」。
+先搞清楚你最近最缺的是什麼，再來選。
+
+✦ 覺得很亂、很耗？→ 先試試淨化類
+✦ 想往前衝卻卡住？→ 才適合招財類
+✦ 感情不順？→ 先從愛自己的頻率開始
+
+不知道自己適合什麼的，歡迎私訊我說說你最近的狀態 🪨`,
+    v2: `買了好多水晶，卻好像什麼都沒改變？
+
+或許不是水晶的問題，是你還沒找到那顆「剛好對的」。
+
+每個人的狀態都不一樣。
+有人需要的是沉下來，有人需要的是打開。
+有人需要被保護，有人需要被推一把。
+
+水晶最神奇的地方，
+不是它有多厲害，
+而是當你帶著它的時候，你會開始願意相信自己。
+
+想找剛好適合你的那顆，私訊我聊聊吧 🌙`,
+    hashtags: "#騏藝逸品 #QIYICrystal #水晶顧問 #水晶功效 #能量水晶 #穩住自己"
+  },
+  {
+    date: "2025-03-28",
+    type: "crystal",
+    typeLabel: "水晶品項",
+    title: "睡不好、心很散？這顆是你現在需要的",
+    crystal: { emoji: "🔮", name: "紫水晶球 / 紫晶洞", why: "安定心神、改善睡眠品質，適合放床頭" },
+    v1: `如果你最近常常睡到一半醒來，
+或者腦袋停不下來，思緒很亂——
+
+這是身體在告訴你：你的能量需要整理了。
+
+紫水晶是我最常推薦「情緒安定線」的首選。
+不是因為它最貴，而是因為它的頻率很柔和，適合長期擺在臥室空間。
+
+放床頭、工作桌旁，每天讓自己稳下來一點點。
+
+#騏藝逸品有現貨，歡迎來門市感受一下頻率 🔮`,
+    v2: `有些夜晚特別難熬。
+
+思緒停不下來，睡了又醒，
+好像心裡一直有什麼東西沒放下。
+
+紫水晶不會幫你解決問題，
+但它會陪你安靜下來。
+
+讓腦袋先休息，讓身體先被保護。
+有時候，「先讓自己穩下來」，才是最勇敢的事。
+
+床頭放一顆，晚安 🌙`,
+    hashtags: "#騏藝逸品 #水晶推薦 #紫水晶 #睡眠 #情緒安定 #能量水晶 #台中水晶"
+  },
+  {
+    date: "2025-03-31",
+    type: "trend",
+    typeLabel: "趨勢話題",
+    title: "2025 很多人在問我：生命靈數怎麼配水晶？",
+    crystal: { emoji: "✨", name: "依生命靈數空缺數配對", why: "補強先天不足的能量面向，個人化搭配" },
+    v1: `最近越來越多人來問我：
+
+「我的生命靈數是幾號，缺什麼、應該補什麼？」
+
+生命靈數的邏輯，不是算命，而是一種「能量藍圖」的概念——
+每個人的出生日期，代表了你這輩子自帶的能量模式，
+「空缺數」，就是你比較少接觸到的那個頻率。
+
+用水晶補空缺數，是現在很多人在做的個人化選物方式。
+
+有興趣了解自己的空缺數嗎？
+私訊我你的生日，我幫你看看 🔢`,
+    v2: `你知道嗎？
+
+你的出生日期裡，藏著一些關於你的秘密——
+有一些能量，你可能從來沒有機會用到。
+
+生命靈數的「空缺數」，說的就是這件事。
+
+不是算命，是認識自己的另一種方式。
+當你知道自己缺什麼，你才知道要往哪裡補。
+
+水晶，可以是那個橋梁 ✨
+
+好奇自己的空缺數嗎？留下你的生日，我幫你看 💬`,
+    hashtags: "#騏藝逸品 #QIYICrystal #生命靈數 #空缺數水晶 #客製水晶 #能量水晶 #水晶搭配"
+  },
+  {
+    date: "2025-04-03",
+    type: "holiday",
+    typeLabel: "節日",
+    title: "清明連假｜掃墓前後，幫自己做一個能量清理",
+    crystal: { emoji: "⚪", name: "黑碧璽 + 白水晶 + 海鹽淨化", why: "掃墓後建議淨化隨身水晶，清除沾附的低頻能量" },
+    v1: `清明連假快到了。
+
+如果你有掃墓的習慣，回來後可以做這幾件事：
+
+1. 換一套衣服，不帶「墓地氣」進室內
+2. 隨身水晶放在陽光下曬 30 分鐘，或用海鹽乾淨一晚
+3. 室內點香或擺放白水晶做空間清理
+
+這不是迷信，是對自己能量的一種保護習慣。
+
+✦ 如果你最近感覺特別疲憊、莫名煩躁，
+   也可能是能量需要整理的訊號 🌿
+
+歡迎來門市做個小小諮詢，一起聊聊你的狀態。`,
+    v2: `清明，是緬懷的時刻，也是轉換的時刻。
+
+在陪家人掃完墓之後，
+記得也回來照顧一下自己的狀態。
+
+把手串放在窗邊曬曬太陽，
+讓它們也被好好淨化一次。
+
+就像我們偶爾需要好好休息一樣，
+能量也需要被清理、重新整理。
+
+清明假期，也是給自己一個重新開始的機會 🌱`,
+    hashtags: "#騏藝逸品 #清明 #水晶淨化 #能量清理 #水晶保養 #QIYICrystal"
+  },
+  {
+    date: "2025-04-07",
+    type: "consult",
+    typeLabel: "顧問型",
+    title: "你不是運氣不好，是狀態跑掉了",
+    crystal: { emoji: "💛", name: "黃水晶 + 太陽石", why: "提升行動力與正向能量，適合想突破卻卡住的人" },
+    v1: `有沒有一段時間，你覺得什麼都不順？
+
+工作機會好像都在別人身上，
+感情一直卡關，
+努力了半天，還是沒有結果。
+
+我在門市遇到很多這樣的客人。
+他們不是不努力，而是當時的「狀態」出了問題。
+
+狀態不對，水晶都難以作用。
+狀態對了，不用特別招，機會也會來。
+
+什麼是「狀態對了」？
+就是你帶著行動力、帶著清晰、帶著「接得住」的頻率。
+
+今天想和你分享的這兩顆，是我最常在「卡住轉折期」推薦的組合 💛`,
+    v2: `有時候不是你不夠好，
+只是那段時間，狀態不在線。
+
+事情做了沒成效，人見了沒感覺，
+努力像是消失在空氣裡。
+
+那種感覺很累，也很孤單。
+
+但我想告訴你——
+卡住，不是終點，是一個訊號：
+你的能量需要被補一補了。
+
+先讓自己回到有光的頻率，
+機會自然願意停下來 ☀️`,
+    hashtags: "#騏藝逸品 #QIYICrystal #黃水晶 #打開運勢 #事業財運 #水晶功效 #水晶推薦"
+  },
+  {
+    date: "2025-04-11",
+    type: "crystal",
+    typeLabel: "水晶品項",
+    title: "春天換季，情緒也在換季",
+    crystal: { emoji: "🌸", name: "玫瑰石英 + 月光石", why: "春天情緒起伏明顯，這兩顆幫助柔和過渡換季能量" },
+    v1: `春天最容易出現的不是花粉過敏，
+而是情緒莫名的起伏。
+
+中醫說春天「肝火旺」，容易焦慮、易怒、失眠。
+從能量的角度看，這也是一個換頻率的季節——
+舊的還沒完全走，新的還沒完全來。
+
+這個季節我最推薦的組合是：
+🌸 玫瑰石英 — 柔和、包容自己
+🌙 月光石 — 穩定情緒週期，特別適合女性
+
+適合把自己照顧好的春天，從一顆水晶開始 🌿`,
+    v2: `春天來了，
+有沒有覺得最近情緒特別敏感？
+
+一點小事就很在意，
+明明天氣變好了，卻還是提不起勁。
+
+不是你的問題，是季節在幫你「換頻道」。
+
+玫瑰石英和月光石，
+是我最喜歡在春天帶著的兩顆。
+
+讓自己在這個轉換的季節，
+也被好好的溫柔對待 🌸`,
+    hashtags: "#騏藝逸品 #春天水晶 #玫瑰石英 #月光石 #換季情緒 #能量水晶 #水晶推薦"
+  },
+  {
+    date: "2025-04-14",
+    type: "consult",
+    typeLabel: "顧問型",
+    title: "想招桃花？先問自己一個問題",
+    crystal: { emoji: "💕", name: "粉晶 + 草莓晶", why: "真正的桃花水晶幫助你先回到被愛的狀態，而非強迫吸引" },
+    v1: `很多人來問我：「我要招桃花，你推薦什麼水晶？」
+
+我通常會先問：「你現在對自己，滿意嗎？」
+
+因為真正的桃花，不是靠一顆水晶「吸」來的。
+而是當你回到了一個狀態——
+自信的、有光的、知道自己值得被愛的頻率，
+那個人才會出現。
+
+粉晶和草莓晶，我喜歡把它們定義成：
+「讓你先好好愛自己，再被別人愛」的水晶。
+
+不是急著招，是先把自己整理好 💕`,
+    v2: `你有多久，沒有認真喜歡過自己了？
+
+在還沒遇到喜歡的人之前，
+先讓自己成為一個值得被愛的頻率。
+
+粉晶不只是招桃花，
+它更像是提醒你：
+你本來就值得被溫柔對待。
+
+帶著它的時候，先練習對自己溫柔 🌹`,
+    hashtags: "#騏藝逸品 #粉晶 #草莓晶 #桃花水晶 #感情運 #關係升溫 #愛自己 #QIYICrystal"
+  },
+  {
+    date: "2025-04-18",
+    type: "crystal",
+    typeLabel: "水晶品項",
+    title: "辦公桌上放這個，工作狀態直接升級",
+    crystal: { emoji: "💛", name: "黃水晶晶洞 / 黃玉髓", why: "辦公空間能量清明，提升專注力與財運磁場" },
+    v1: `你的辦公桌上，放的是什麼？
+
+空間能量很多時候比你想的更影響工作狀態。
+辦公桌散亂、能量混濁，很難進入高效模式。
+
+我建議可以在辦公桌上放：
+💛 黃水晶晶洞 — 聚財、淨化空間、讓思維清晰
+💛 黃玉髓 — 行動力、執行力、快速進入狀態
+
+特別適合：
+✦ 業務、自由工作者、老闆
+✦ 想衝業績、談合作的人
+✦ 常常開會、需要氣場的人
+
+空間對了，狀態自然跟上 🏢`,
+    v2: `那個下午三點，
+突然什麼都不想動的你，
+可能只是少了一點能量提醒。
+
+辦公桌上的黃水晶，
+不是裝飾，是一個讓你記得「繼續」的東西。
+
+每次看到它，就像是有人輕輕拍了你一下說：
+「你可以的，繼續。」
+
+工作狀態，從整理桌上的能量開始 ✨`,
+    hashtags: "#騏藝逸品 #黃水晶 #辦公桌水晶 #招財水晶 #工作運 #事業財運 #QIYICrystal"
+  },
+  {
+    date: "2025-04-22",
+    type: "holiday",
+    typeLabel: "節日",
+    title: "世界地球日｜每一顆水晶，都是大地給的禮物",
+    crystal: { emoji: "🌍", name: "礦石晶洞 / 天然原礦系列", why: "強調天然礦石的大地能量，回應地球日主題" },
+    v1: `今天是世界地球日。
+
+你知道嗎？你手上的每一顆水晶，
+都是大地歷經數千萬年結晶而成的禮物。
+
+不是量產的工業品，
+而是來自地球深處，帶著最原始能量的石頭。
+
+這讓我覺得，帶著天然水晶的人，
+其實都在和大地保持著一種連結。
+
+地球日這天，
+讓我們一起感謝那些來自大地的陪伴 🌍
+
+#WorldEarthDay #地球日`,
+    v2: `地球日快樂 🌏
+
+每一顆礦石，都花了幾千萬年才長成這樣。
+就為了有一天，出現在你面前。
+
+有沒有覺得，這本身就是一件很神奇的事？
+
+謝謝大地，謝謝那些默默陪著我們的石頭。`,
+    hashtags: "#騏藝逸品 #世界地球日 #地球日 #天然水晶 #礦石 #QIYICrystal #WorldEarthDay"
+  },
+  {
+    date: "2025-04-25",
+    type: "consult",
+    typeLabel: "顧問型",
+    title: "給正在考慮送媽媽什麼的你",
+    crystal: { emoji: "🌷", name: "玫瑰石英 + 月光石禮盒", why: "母親節首選，適合疲憊的媽媽補充愛與溫柔能量" },
+    v1: `母親節快到了。
+
+這幾年我發現，很多人不是不想送，
+而是不知道送什麼「有意思」的。
+
+送水晶，我喜歡這樣思考：
+
+你媽媽最近的狀態是什麼？
+✦ 太累了、需要放鬆？→ 紫水晶、月光石
+✦ 壓力大、需要安定？→ 黑碧璽、煙晶
+✦ 想讓她感覺被愛？→ 粉晶、玫瑰石英
+✦ 希望她健康、有活力？→ 綠幽靈、孔雀石
+
+水晶的好處是——
+它不只是一個東西，而是一份「你觀察到她了」的心意。
+
+需要幫你選的，私訊我說說你媽媽的狀態 🌷`,
+    v2: `她可能從來不說累，
+但你知道她一直都很努力。
+
+這個母親節，送她一顆真的適合她的水晶吧。
+
+不用最貴的，只要最剛好的。
+那才是她收到的時候，會放在床頭捨不得放下的那種 🌷`,
+    hashtags: "#騏藝逸品 #母親節 #母親節禮物 #水晶禮盒 #送禮水晶 #QIYICrystal #玫瑰石英"
+  },
+  {
+    date: "2025-04-28",
+    type: "trend",
+    typeLabel: "趨勢話題",
+    title: "想重新開始的人，從這裡看",
+    crystal: { emoji: "🌱", name: "海藍寶 + 月亮石 + 白水晶", why: "轉換期三寶：清理過去、打開新頻道、帶入清晰方向" },
+    v1: `有些人來找我，不是因為想招什麼，
+而是想把「舊的」清掉。
+
+換工作、搬家、分手後、走過一段低潮——
+這些都是需要「能量重啟」的時刻。
+
+這時候我最喜歡推薦的組合是：
+🌊 海藍寶 — 說清楚、理清楚、帶出語言和溝通力
+🌙 月亮石 — 接受循環，走過轉換期
+⚪ 白水晶 — 清空舊的，讓新的有空間進來
+
+重新開始，不是把過去抹掉，
+而是帶著走過的一切，選擇繼續往前。
+
+你準備好了嗎？ 🌱`,
+    v2: `你知道嗎？
+有時候「什麼都不好」，
+其實是一個訊號——
+
+代表你已經準備好換到下一個階段了。
+
+卡住，不是壞事，是轉換前的整理期。
+
+重新開始的那一步，
+從選一顆陪你走過去的水晶，就可以開始 🌱`,
+    hashtags: "#騏藝逸品 #重新開始 #海藍寶 #月亮石 #能量重啟 #轉換期 #QIYICrystal"
+  }
 ];
 
-// ── DATA: STORIES ──
-const storiesData = [
-  { id: 1, title: '日常開店問候', icon: '🏪', crystal: '當日主打品', copyA: '今天來了這顆 🔮，一進門就讓我停下來的那種。今日營業中，歡迎來感受一下頻率。' },
-  { id: 2, title: '品項聚焦展示', icon: '💎', crystal: '銀曜石 × 硃砂', copyA: '銀曜石 × 硃砂 🖤❤️\n低調，卻很有氣場。保護能量 × 穩定磁場。' }
-];
-
-// ── API KEY LOGIC ──
-function getApiKey() {
-  return localStorage.getItem('qiyi_gemini_key') || '';
-}
-
-function saveApiKey() {
-  const keyInput = document.getElementById('googleApiKey');
-  const key = keyInput.value.trim();
-  if (!key) return alert('請輸入 API Key');
-  localStorage.setItem('qiyi_gemini_key', key);
-  updateApiKeyStatus();
-  showToast('金鑰已成功儲存');
-}
-
-function clearApiKey() {
-  localStorage.removeItem('qiyi_gemini_key');
-  document.getElementById('googleApiKey').value = '';
-  updateApiKeyStatus();
-  showToast('金鑰已清除');
-}
-
-function updateApiKeyStatus() {
-  const key = getApiKey();
-  const statusEl = document.getElementById('apiKeyStatus');
-  if (key) {
-    const maskedKey = key.substring(0, 6) + '...' + key.substring(key.length - 4);
-    statusEl.innerHTML = `<span class="status-ok">● 金鑰已就緒</span> (${maskedKey})`;
-    document.getElementById('googleApiKey').value = key;
-  } else {
-    statusEl.innerHTML = `<span class="status-warn">● 尚未設定金鑰</span>`;
-  }
-}
-
-// ── AI LOGIC ──
-const SYSTEM_PROMPT = `你是「騏藝逸品 QIYI Crystal」的品牌社群文案寫手。
-品牌定位：「人生狀態顧問型水晶品牌」。
-核心理念：不只是賣產品，而是幫人透過水晶整理當下狀態。
-語氣：溫暖、真誠、懂人心、專業且不強推。
-注意事項：請避免任何醫療效能暗示（如治療、痊癒），改用陪伴、平衡、整理能量、穩住狀態等語法。`;
-
-async function callGemini(userPrompt) {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    alert('請先在頁面頂端設定 Google Gemini API Key');
-    throw new Error('MISSING_API_KEY');
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-  
-  const payload = {
-    contents: [{ parts: [{ text: userPrompt }] }],
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    const errorMsg = data.error?.message || 'API 呼叫失敗';
-    throw new Error(errorMsg);
-  }
-
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
-
-let generatedV1 = '', generatedV2 = '';
-let currentOutputView = 'v1';
-
-async function generatePost() {
-  const name = document.getElementById('crystalName').value.trim();
-  if (!name) return alert('請輸入水晶名稱');
-  const effect = document.getElementById('crystalEffect').value;
-  const notes = document.getElementById('extraNotes').value.trim();
-  const btn = document.getElementById('genBtn');
-
-  btn.disabled = true;
-  document.getElementById('outputV1').innerHTML = `<div style="text-align:center;padding-top:60px;"><div class="loading-dots"><span></span><span></span><span></span></div><br><span style="font-size:12px;color:var(--text-light);">AI 正在構思文案...</span></div>`;
-  document.getElementById('outputV2').innerHTML = `<div style="text-align:center;padding-top:60px;"><div class="loading-dots"><span></span><span></span><span></span></div><br><span style="font-size:12px;color:var(--text-light);">AI 正在構思文案...</span></div>`;
-
-  const prompt = `請針對以下水晶產品產出兩版社群文案。
-品項：${name}
-功效方向：${effect}
-補充資訊：${notes || '無'}
-
-要求：
-版本 A (顧問型)：從人們常見的生活困擾或心理狀態切入，給予顧問式建議。
-版本 B (感性型)：文字詩意、有畫面感，強調情感連結。
-每篇約 150-250 字。
-請用 JSON 格式回傳，欄位為 "v1" 和 "v2"。`;
-
-  try {
-    const resultText = await callGemini(prompt + "\n請務必只回傳純 JSON 內容。");
-    // 簡單過濾可能的多餘文字
-    const jsonStr = resultText.match(/\{[\s\S]*\}/)?.[0] || resultText;
-    const data = JSON.parse(jsonStr);
-    
-    generatedV1 = data.v1 || resultText;
-    generatedV2 = data.v2 || "";
-    
-    document.getElementById('outputV1').innerText = generatedV1;
-    document.getElementById('outputV2').innerText = generatedV2;
-  } catch (e) {
-    const errorDisplay = `<div style="color:var(--status-error);padding:20px;">生成失敗：${e.message}</div>`;
-    document.getElementById('outputV1').innerHTML = errorDisplay;
-    document.getElementById('outputV2').innerHTML = errorDisplay;
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-// ── UI LOGIC ──
-function showTab(name) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  const activeTab = Array.from(document.querySelectorAll('.tab')).find(t => t.innerText.includes(name === 'posts' ? '貼文庫' : name === 'stories' ? '限動模板' : name === 'generator' ? '產生器' : name === 'strategy' ? '策略' : '貼文日曆'));
-  if (activeTab) activeTab.classList.add('active');
-}
-
-function switchOutput(v) {
-  currentOutputView = v;
-  document.getElementById('outputV1').style.display = v === 'v1' ? 'block' : 'none';
-  document.getElementById('outputV2').style.display = v === 'v2' ? 'block' : 'none';
-  document.querySelectorAll('#tab-generator .output-tab').forEach(btn => btn.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-}
-
-function copyOutput() {
-  const text = currentOutputView === 'v1' ? generatedV1 : generatedV2;
-  if (!text || text.includes('填入左側資訊')) return;
-  navigator.clipboard.writeText(text).then(() => showToast('文案已複製'));
-}
-
-let currentYear = 2025, currentMonth = 2; // 3月
+// ── CALENDAR ──
+let currentYear = 2025, currentMonth = 2; // 0-indexed
 
 function renderCalendar() {
+  const label = document.getElementById('monthLabel');
   const grid = document.getElementById('calGrid');
   const months = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  document.getElementById('monthLabel').innerText = `${currentYear} 年 ${months[currentMonth]}`;
-  
-  grid.innerHTML = ['日','一','二','三','四','五','六'].map(d => `<div class="cal-day-label">${d}</div>`).join('');
-  
+  label.textContent = `${currentYear} 年 ${months[currentMonth]}`;
+
+  const days = ['日','一','二','三','四','五','六'];
+  grid.innerHTML = days.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  
-  for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
-  
-  for(let i=1; i<=daysInMonth; i++) {
-    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+  const today = new Date();
+
+  for (let i = 0; i < firstDay; i++) {
+    grid.innerHTML += `<div class="cal-day empty"></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const post = postData.find(p => p.date === dateStr);
-    grid.innerHTML += `<div class="cal-day">
-      <div class="day-num">${i}</div>
-      ${post ? `<div class="day-tag tag-${post.type}">${post.typeLabel}</div><div class="post-dot"></div>` : ''}
+    const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
+    let inner = `<div class="day-num ${isToday?'today-num':''}">${d}</div>`;
+    if (post) {
+      inner += `<div class="day-tag tag-${post.type}">${post.typeLabel}</div>`;
+      inner += `<div class="day-preview">${post.title}</div>`;
+      inner += `<div class="post-dot"></div>`;
+    }
+    grid.innerHTML += `<div class="cal-day ${isToday?'today':''} ${post?'has-post':''}" onclick="${post?`openPost('${post.date}')`:''}">
+      ${inner}
     </div>`;
   }
 }
@@ -454,40 +1269,689 @@ function renderCalendar() {
 function prevMonth() { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); }
 function nextMonth() { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); }
 
+function openPost(dateStr) {
+  showTab('posts');
+  setTimeout(() => {
+    const el = document.querySelector(`[data-date="${dateStr}"]`);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 100);
+}
+
+// ── POSTS ──
 function renderPosts() {
   const grid = document.getElementById('postsGrid');
-  grid.innerHTML = postData.map(p => `<div class="post-card">
-    <div class="card-title">${p.title}</div>
-    <div class="card-crystal" style="font-size:12px;">🔮 ${p.crystal}</div>
-    <div class="card-body" style="height:120px;overflow:hidden;mask-image:linear-gradient(to bottom, black 60%, transparent 100%);">${p.v1}</div>
-    <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:8px; font-size:12px;" onclick="navigator.clipboard.writeText(\`${p.v1}\`);showToast('已複製預設文案');">複製預設文案</button>
-  </div>`).join('');
-}
-
-function renderStories() {
-  const grid = document.getElementById('storiesGrid');
-  grid.innerHTML = storiesData.map(s => `<div class="story-card">
-    <div class="story-card-body">
-      <div class="card-title" style="font-size:14px;">${s.icon} ${s.title}</div>
-      <div class="story-copy" style="font-size:12px;">${s.copyA}</div>
-      <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:6px; font-size:11px;" onclick="navigator.clipboard.writeText(\`${s.copyA}\`);showToast('已複製限動文案');">複製</button>
+  const typeColors = {
+    consult: 'tag-consult',
+    holiday: 'tag-holiday',
+    crystal: 'tag-crystal',
+    trend: 'tag-trend'
+  };
+  grid.innerHTML = postData.map(p => `
+    <div class="post-card" data-date="${p.date}">
+      <div class="card-header">
+        <div class="card-date">${p.date}</div>
+        <div class="card-type-badge ${typeColors[p.type]}">${p.typeLabel}</div>
+      </div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-crystal">
+        <div class="crystal-emoji">${p.crystal.emoji}</div>
+        <div class="crystal-info">
+          <div class="crystal-name">建議品項：${p.crystal.name}</div>
+          <div class="crystal-why">${p.crystal.why}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px; font-size:12px;">
+        <span class="ver-badge ver1">版本 A — 顧問型</span>
+      </div>
+      <div class="card-body">${p.v1}</div>
+      <div style="margin-bottom:8px; font-size:12px;">
+        <span class="ver-badge ver2">版本 B — 感性型</span>
+      </div>
+      <div class="card-body">${p.v2}</div>
+      <div class="card-hashtags">${p.hashtags}</div>
+      <div class="card-actions">
+        <button class="btn-copy" onclick="copyText(\`${escJs(p.v1)}\n\n${escJs(p.hashtags)}\`)">複製版本 A</button>
+        <button class="btn-ver2" onclick="copyText(\`${escJs(p.v2)}\n\n${escJs(p.hashtags)}\`)">複製版本 B</button>
+      </div>
     </div>
-  </div>`).join('');
+  `).join('');
 }
 
-function showToast(msg) {
+function escJs(s) { return s.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
+
+// ── AI GENERATOR ──
+let currentOutputTab = 'v1';
+let generatedV1 = '', generatedV2 = '';
+let uploadedImageBase64 = null;
+
+async function callGeminiAPI(prompt) {
+  const apiKey = document.getElementById('googleApiKey').value.trim();
+  if (!apiKey) {
+    showToast('⚠️ 請先於右上角輸入 Google API Key');
+    throw new Error('API Key missing');
+  }
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  const payload = {
+      contents: [{ parts: [{ text: prompt }] }]
+  };
+
+  const delays = [1000, 2000, 4000, 8000, 16000];
+  for (let i = 0; i < 5; i++) {
+      try {
+          const resp = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+          });
+          if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+          const data = await resp.json();
+          return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      } catch (err) {
+          if (i === 4) throw err;
+          await new Promise(r => setTimeout(r, delays[i]));
+      }
+  }
+}
+
+function handleImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewImg').style.display = 'block';
+    uploadedImageBase64 = e.target.result.split(',')[1];
+  };
+  reader.readAsDataURL(file);
+}
+
+function switchOutput(tab) {
+  currentOutputTab = tab;
+  document.getElementById('outputV1').style.display = tab==='v1'?'block':'none';
+  document.getElementById('outputV2').style.display = tab==='v2'?'block':'none';
+  document.getElementById('tabV1btn').className = 'output-tab' + (tab==='v1'?' active':'');
+  document.getElementById('tabV2btn').className = 'output-tab' + (tab==='v2'?' active':'');
+}
+
+async function generatePost() {
+  const name = document.getElementById('crystalName').value.trim();
+  if (!name) { showToast('⚠️ 請先輸入水晶品項名稱'); return; }
+
+  const effect = document.getElementById('customEffect').value.trim() || document.getElementById('crystalEffect').value;
+  const holiday = document.getElementById('holidayTag').value;
+  const extra = document.getElementById('extraNotes').value.trim();
+
+  document.getElementById('genBtn').disabled = true;
+
+  const loadingV1 = `<div style="text-align:center;padding:60px 0"><div style="color:var(--text-light);font-size:13px;margin-bottom:12px">正在生成版本 A…</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+  const loadingV2 = `<div style="text-align:center;padding:60px 0"><div style="color:var(--text-light);font-size:13px;margin-bottom:12px">正在生成版本 B…</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('outputV1').innerHTML = loadingV1;
+  document.getElementById('outputV2').innerHTML = loadingV2;
+
+  const brandContext = `你是「騏藝逸品 QIYI Crystal」的品牌社群文案寫手。
+品牌定位：「人生狀態顧問型水晶品牌」。
+核心理念：不是賣水晶，而是幫人整理當下狀態。
+目標客群：25-45歲女性，有壓力、有困惑、願意為讓自己好一點花錢。
+品牌語氣：有溫度、真誠、懂人心、不強推、先理解再建議。
+`;
+
+  const holiday_txt = holiday ? `\n結合節日/趨勢：${holiday}` : '';
+  const extra_txt = extra ? `\n補充說明：${extra}` : '';
+
+  const promptV1 = `${brandContext}
+請寫一篇【顧問型】IG/FB 貼文，格式要求：
+1. 開頭從「客人的狀態/問題」切入（不要直接說水晶）
+2. 中段給出顧問建議邏輯（為什麼這顆適合這個狀態）
+3. 最後自然帶出品項，並邀請私訊或來店
+4. 字數 150-250 字，自然口語，有換行節奏感
+5. 結尾加上3-5個適合的 hashtag
+
+水晶品項：${name}
+功效/狀態：${effect}${holiday_txt}${extra_txt}
+
+請直接輸出貼文內容，不要任何說明文字。`;
+
+  const promptV2 = `${brandContext}
+請寫一篇【感性共鳴型】IG/FB 貼文，格式要求：
+1. 開頭用情緒/感受切入（不是問句就是一個畫面）
+2. 中段用文學性語言描述水晶帶來的感受
+3. 不強調功效，強調「陪伴感」和「情緒連結」
+4. 字數 100-180 字，短句多、有詩意、留白感
+5. 結尾加上3-5個適合的 hashtag
+
+水晶品項：${name}
+功效/狀態：${effect}${holiday_txt}${extra_txt}
+
+請直接輸出貼文內容，不要任何說明文字。`;
+
+  try {
+    const [v1, v2] = await Promise.all([callGeminiAPI(promptV1), callGeminiAPI(promptV2)]);
+    generatedV1 = v1; generatedV2 = v2;
+    document.getElementById('outputV1').innerText = v1;
+    document.getElementById('outputV2').innerText = v2;
+  } catch (err) {
+    const errorMsg = err.message === 'API Key missing' ? '⚠️ 請先於右上角輸入 Google API Key。' : '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
+    document.getElementById('outputV1').innerHTML = `<div style="color:#E8956C;padding:20px">${errorMsg}</div>`;
+    document.getElementById('outputV2').innerHTML = `<div style="color:#E8956C;padding:20px">${errorMsg}</div>`;
+  }
+  document.getElementById('genBtn').disabled = false;
+}
+
+async function regenerate() {
+  await generatePost();
+}
+
+function copyOutput() {
+  const text = currentOutputTab === 'v1' ? generatedV1 : generatedV2;
+  if (!text) return;
+  copyText(text);
+}
+
+// ── UTILS ──
+function copyText(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  document.body.appendChild(textArea);
+  textArea.select();
+  try {
+      document.execCommand('copy');
+      showToast();
+  } catch (err) {
+      console.error('Copy failed', err);
+      showToast('⚠️ 複製失敗，請手動複製');
+  }
+  document.body.removeChild(textArea);
+}
+
+function showToast(msg = "✓ 已複製到剪貼簿") {
   const t = document.getElementById('toast');
-  t.innerText = msg;
+  t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-window.onload = () => {
-  updateApiKeyStatus();
-  renderCalendar();
-  renderPosts();
-  renderStories();
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab')[['calendar','posts','stories','generator','strategy'].indexOf(name)].classList.add('active');
+}
+
+// ── STORIES DATA ──
+const storiesData = [
+  {
+    id: 1, type: 'A', typeLabel: '日常開店', icon: '🏪',
+    title: '開店問候 × 主角單品',
+    crystal: '任何當天主打品',
+    shot: [
+      { label: '角度', tip: '45度俯拍，手輕托水晶，背景木板或布料' },
+      { label: '光線', tip: '靠窗自然光，避免正午硬光，柔光最佳' },
+      { label: '構圖', tip: '單顆水晶置中或偏右三分之一' },
+      { label: '道具', tip: '可加木托盤、乾燥花或麻布' }
+    ],
+    copyA: `今天來了這顆 🔮
+一進門就讓我停下來的那種。
+
+今日營業中，歡迎來感受一下頻率 ✨
+（地址：台中 / 私訊預約）`,
+    copyB: `🌿 今日開店
+有什麼特別想看的，
+私訊我，我幫你留著 💬`,
+    cta: '加問答框：「你最想看什麼類型的水晶？」',
+    tip: '第一篇高觸及就是這種格式，每週至少一篇。'
+  },
+  {
+    id: 2, type: 'B', typeLabel: '品項介紹', icon: '💎',
+    title: '單品聚焦 × 風格語言',
+    crystal: '銀曜石 × 硃砂手串（類似高對比品項）',
+    shot: [
+      { label: '角度', tip: '平拍 or 微仰，讓手串有量感' },
+      { label: '背景', tip: '黑色大理石紋或深木色，突顯顏色對比' },
+      { label: '光線', tip: '側光打亮，讓珠體有光澤感' },
+      { label: '細節', tip: '近拍顯示珠面紋理，讓人感受質感' }
+    ],
+    copyA: `銀曜石 × 硃砂手串 🖤❤️
+黑與紅的對比
+低調，卻很有氣場。
+
+保護能量 × 穩定磁場
+適合需要守住自己的你 🔒
+
+有興趣私訊我了解 👇`,
+    copyB: `有些人不用說話
+氣場就到了。
+
+這條手串，懂你。`,
+    cta: '加貼圖投票：「你喜歡哪種風格？🔘 低調質感  🔘 顯眼搶眼」',
+    tip: '組合品項 + 對比色視覺 + 風格形容詞，是觸及爆量的三要素。'
+  },
+  {
+    id: 3, type: 'B', typeLabel: '品項介紹', icon: '✨',
+    title: '雕件特寫 × 功效關鍵字',
+    crystal: '拉長石貔貅 / 任何雕件',
+    shot: [
+      { label: '角度', tip: '側拍或微俯，讓雕件輪廓清晰可見' },
+      { label: '光線', tip: '打光讓拉長石閃藍光，必拍的魔法時刻' },
+      { label: '背景', tip: '深色布料或原木，讓石色跳出來' },
+      { label: '呈現', tip: '一手托著拍，有溫度感；或平放加一朵乾燥花' }
+    ],
+    copyA: `拉長石貔貅 🐉
+拉長石的靈動光澤 × 貔貅的守財象徵
+
+低調，卻很有份量。
+適合想穩住財氣、守護能量的你。
+
+目前店內有貨，歡迎私訊詢問 ✨`,
+    copyB: `有些東西，
+你看一眼就知道它是你的。
+
+這隻貔貅，在等它的主人 🐉`,
+    cta: '加問答框：「你有養貔貅嗎？」激發互動',
+    tip: '雕件類視覺獨特，加上功效關鍵字搜尋友善，互動潛力高。'
+  },
+  {
+    id: 4, type: 'C', typeLabel: '互動提升 🆕', icon: '💬',
+    title: '狀態投票 × 引導私訊',
+    crystal: '依投票結果推薦對應品項',
+    shot: [
+      { label: '畫面', tip: '四種狀態分別用四顆代表水晶拼圖，2x2格局' },
+      { label: '文字', tip: '每顆旁邊標上狀態關鍵字（安定／招財／桃花／重啟）' },
+      { label: '風格', tip: '統一背景色，整齊感強的九宮格式' },
+      { label: '互動', tip: 'IG 加投票貼圖，FB 直接問留言' }
+    ],
+    copyA: `你最近最需要哪種能量？
+
+🌙 穩定情緒，先讓自己安定
+💛 衝事業，打開財運磁場
+💕 感情，想被更多人喜歡
+🌱 重新開始，換一個狀態
+
+投票告訴我，我幫你推薦！`,
+    copyB: `你現在的狀態是？
+選一個最像你的 👇
+
+（下方投票，我看到了會私訊你推薦 ✨）`,
+    cta: '必加 IG 投票貼圖！看完結果主動私訊得票最多者「我幫你搭配」',
+    tip: '這類限動互動率可提升 5-10 倍，且投票完可直接開發潛在客戶。'
+  },
+  {
+    id: 5, type: 'A', typeLabel: '日常開店', icon: '🌿',
+    title: '換季情緒共感 × 當季品項',
+    crystal: '玫瑰石英 / 月光石（春天首選）',
+    shot: [
+      { label: '佈景', tip: '水晶旁加幾朵粉色小花或花瓣，春天氛圍感' },
+      { label: '角度', tip: '微俯拍，花與石頭同框' },
+      { label: '色調', tip: '整體偏暖色或粉色，與月光石的柔和感一致' },
+      { label: '道具', tip: '白色陶碗或淺色石板作底' }
+    ],
+    copyA: `春天來了，情緒也在換季 🌸
+
+最近有沒有特別敏感、容易煩躁？
+不是你的問題，是季節在幫你換頻道。
+
+玫瑰石英 + 月光石
+這兩顆是我春天最常推的陪伴組合。
+
+來店裡感受看看，歡迎預約 ✨`,
+    copyB: `春天，先溫柔對待自己。
+
+🌸`,
+    cta: '加問答框：「你春天最大的困擾是？」',
+    tip: '季節性限動觸及通常比平均高 20-30%，要善用。'
+  },
+  {
+    id: 6, type: 'B', typeLabel: '品項介紹', icon: '💛',
+    title: '辦公桌系列 × 事業能量',
+    crystal: '黃水晶晶洞 / 黃玉髓',
+    shot: [
+      { label: '場景', tip: '直接放在實際辦公桌上拍，有生活代入感' },
+      { label: '構圖', tip: '讓筆電或筆記本入鏡一角，暗示「工作場景」' },
+      { label: '光線', tip: '偏暖色光，讓黃水晶金光感更強' },
+      { label: '特寫', tip: '再補一張純晶洞近拍，讓人看到內部晶體結構' }
+    ],
+    copyA: `辦公桌上放這個，工作狀態直接升級 💛
+
+黃水晶晶洞
+聚財 × 淨化空間 × 讓思維清晰
+
+特別適合：業務、自由工作者、想衝業績的你
+
+目前有貨，私訊詢問尺寸 👇`,
+    copyB: `那個下午三點想躺平的自己，
+只是需要一點能量補給。
+
+你的辦公桌上，放了什麼？ 💛`,
+    cta: '加問答框：「你辦公桌上有水晶嗎？」',
+    tip: '辦公室風水題材互動率高，容易被分享。'
+  },
+  {
+    id: 7, type: 'C', typeLabel: '互動提升 🆕', icon: '🔢',
+    title: '生命靈數話題 × 空缺數互動',
+    crystal: '依生命靈數空缺數推薦',
+    shot: [
+      { label: '視覺', tip: '用 1-9 數字搭配對應水晶顏色排列，視覺感強' },
+      { label: '文字', tip: '畫面上標「你的空缺數是幾？」' },
+      { label: '簡潔', tip: '背景乾淨，數字大而清晰' },
+      { label: '引導', tip: '最後一格放「私訊我你的生日 → 我幫你看」' }
+    ],
+    copyA: `你知道你的「生命靈數空缺數」嗎？
+
+出生日期裡藏著你最缺乏的能量方向，
+用水晶來補，是很多人在做的個人化選物方式。
+
+📩 私訊我你的生日，
+我幫你算空缺數 + 推薦適合的水晶組合。
+
+完全免費，只需要你的生日 ✨`,
+    copyB: `你這輩子，可能有幾個數字從來沒出現過。
+
+那些數字代表的能量，
+也許就是你一直覺得「少了什麼」的答案。
+
+私訊我你的生日 🔢`,
+    cta: '加問答框：「你的生命靈數是幾？」— 直接開啟諮詢對話',
+    tip: '生命靈數話題 2025 年流量極高，且每個人都好奇自己，私訊轉化率極高。'
+  },
+  {
+    id: 8, type: 'A', typeLabel: '日常開店', icon: '🧹',
+    title: '水晶淨化教學 × 實用內容',
+    crystal: '各類水晶（淨化方式介紹）',
+    shot: [
+      { label: '步驟感', tip: '拍攝海鹽淨化、陽光淨化的過程，有畫面感' },
+      { label: '道具', tip: '海鹽碗 + 水晶，或窗邊陽光下的水晶特寫' },
+      { label: '構圖', tip: '碗裡的水晶俯拍，白色或米色背景乾淨感' },
+      { label: '多格', tip: '做成 3 格：方法一、方法二、方法三' }
+    ],
+    copyA: `你上次淨化水晶是什麼時候？ 🌿
+
+水晶用久了會吸附能量，
+定期淨化很重要。
+
+3 種最常見方法：
+① 月光浴（滿月前後）
+② 海鹽靜置（隔夜）
+③ 陽光曬（10-20分鐘，避免高溫）
+
+需要知道哪種水晶適合哪種方法？
+私訊我或留言 👇`,
+    copyB: `讓你的水晶，
+也好好休息一下 🌙
+
+今晚試試月光浴？`,
+    cta: '加貼圖問答：「你都怎麼淨化水晶？」',
+    tip: '實用知識類限動分享率高，有助於拉新粉。'
+  },
+  {
+    id: 9, type: 'B', typeLabel: '品項介紹', icon: '🎁',
+    title: '送禮場景 × 禮盒情境',
+    crystal: '禮盒組 / 節日對應品項',
+    shot: [
+      { label: '情境', tip: '水晶放在禮盒中打開的狀態拍，加緞帶包裝' },
+      { label: '氛圍', tip: '旁邊放一張手寫小卡，製造溫度感' },
+      { label: '色調', tip: '依節日調整：母親節粉色系、聖誕金紅系' },
+      { label: '代入感', tip: '手持禮盒入鏡，給人「要送出去」的畫面' }
+    ],
+    copyA: `不知道送什麼？
+送一顆「剛好適合她現在狀態」的水晶 🎁
+
+比送包包更有心意的地方是——
+你是真的去想過她最近怎麼了。
+
+母親節快到了，
+告訴我你媽媽的狀態，
+我幫你選最合適的那顆 🌷`,
+    copyB: `最好的禮物，
+是讓人感覺「你真的懂我」的那種。
+
+🌷`,
+    cta: '加問答框：「你媽媽最近的狀態是？」— 直接收集需求',
+    tip: '節日前一週開始發，3-5 篇相關限動持續暖身。'
+  },
+  {
+    id: 10, type: 'C', typeLabel: '互動提升 🆕', icon: '🪞',
+    title: '鏡前 / 穿搭配戴 × 真實使用感',
+    crystal: '手串 / 隨身水晶配戴款',
+    shot: [
+      { label: '手腕入鏡', tip: '手腕配戴水晶手串，自然垂放或托著石頭特寫' },
+      { label: '生活感', tip: '咖啡杯旁、書桌邊、自然出現的場景' },
+      { label: '真實感', tip: '不刻意，手指有動作感（翻書、握杯），石頭在手腕上' },
+      { label: '光線', tip: '自然光最好，避免過曝，讓珠體有光澤不死白' }
+    ],
+    copyA: `今天出門帶著它 🖤
+
+黑碧璽手串——
+最近外出需要保護能量的時候，
+我最常選這條。
+
+你出門都戴什麼？
+留言告訴我 👇`,
+    copyB: `出門前，選一條今天的頻率。
+
+今天選了黑的。
+想被好好保護的那種心情。`,
+    cta: '加問答框：「你最常戴哪種水晶出門？」',
+    tip: '配戴實拍有強烈「代入感」，讓觀眾想像自己戴的畫面，購買意願更高。'
+  },
+  {
+    id: 11, type: 'A', typeLabel: '日常開店', icon: '📦',
+    title: '新貨到 × 第一眼開箱感',
+    crystal: '新進品項',
+    shot: [
+      { label: '開箱感', tip: '包裝紙打開的瞬間，或水晶剛擺上木盤的樣子' },
+      { label: '第一眼', tip: '「這是今天剛到的」的真實感比精修美圖更吸人' },
+      { label: '數量感', tip: '一字排開幾顆，讓人有「可以選」的期待感' },
+      { label: '補充', tip: '再拍一顆最美的特寫，作為第二張限動' }
+    ],
+    copyA: `今天新到貨 🚚
+
+這批讓我忍不住一直摸 🔮
+每一顆狀態都很好。
+
+今日開放詢問，
+有想要的私訊我，先到先問 ✨`,
+    copyB: `新的來了。
+
+有時候就是第一眼，
+你就知道它是你的。
+
+來嗎？`,
+    cta: '加倒數計時貼圖：「今日限量，X 小時內詢問享優先」',
+    tip: '新貨開箱類限動點擊率高，配合「限時」標語製造稀缺感。'
+  },
+  {
+    id: 12, type: 'C', typeLabel: '互動提升 🆕', icon: '🌙',
+    title: '夜晚情緒共鳴 × 睡前流量',
+    crystal: '紫水晶 / 月光石 / 黑碧璽',
+    shot: [
+      { label: '時間感', tip: '夜晚燈光下拍，暖黃燈光照水晶，氛圍感強' },
+      { label: '睡前感', tip: '水晶放在床頭、書旁，生活感的場景' },
+      { label: '靜謐', tip: '不要太多道具，一顆水晶在暖光中就很美' },
+      { label: '發布時間', tip: '晚上 9-11 點發，睡前流量高峰' }
+    ],
+    copyA: `今晚睡得好嗎？🌙
+
+如果你最近常常睡到一半醒來，
+或者腦袋停不下來——
+
+試試在床頭放一顆紫水晶。
+不是迷信，是讓自己有個「可以安靜的理由」。
+
+有需要的，私訊我 💬`,
+    copyB: `晚安。
+
+把今天的累，
+就讓它停在今天。
+
+明天又是全新的 🌙`,
+    cta: '加問答框：「你最近睡眠怎麼樣？」— 夜間互動率高',
+    tip: '晚間 9-11 點是 IG 觸及高峰，睡眠話題共鳴強，這類限動互動率比日間高 40%。'
+  }
+];
+
+function renderStories() {
+  const grid = document.getElementById('storiesGrid');
+  const typeColors = { A:'tag-consult', B:'tag-crystal', C:'tag-trend' };
+  grid.innerHTML = storiesData.map(s => `
+    <div class="story-card">
+      <div class="story-card-header">
+        <div class="story-type-row">
+          <span class="story-icon">${s.icon}</span>
+          <div>
+            <div class="story-card-title">${s.title}</div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:2px">建議品項：${s.crystal}</div>
+          </div>
+        </div>
+        <div class="card-type-badge ${typeColors[s.type]}" style="white-space:nowrap;flex-shrink:0">TYPE ${s.type}｜${s.typeLabel}</div>
+      </div>
+      <div class="story-card-body">
+
+        <div class="story-section-label">📷 拍攝技巧</div>
+        <div class="story-shot-grid">
+          ${s.shot.map(sh=>`<div class="shot-item"><strong>${sh.label}</strong>${sh.tip}</div>`).join('')}
+        </div>
+
+        <div class="story-section-label">✍️ 文案版本 A（顧問型）</div>
+        <div class="story-copy">${s.copyA}</div>
+
+        <div class="story-section-label">💬 文案版本 B（感性型）</div>
+        <div class="story-copy">${s.copyB}</div>
+
+        <div class="story-section-label">🎯 互動元素建議</div>
+        <ul class="story-tip-list">
+          <li>${s.cta}</li>
+          <li style="color:var(--gold)">${s.tip}</li>
+        </ul>
+      </div>
+      <div class="story-card-footer">
+        <button class="btn-copy" onclick="copyText(\`${escJs(s.copyA)}\`)">複製版本 A</button>
+        <button class="btn-ver2" onclick="copyText(\`${escJs(s.copyB)}\`)">複製版本 B</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── STORY GENERATOR ──
+let selectedStoryType = 'open';
+let currentStoryOutputTab = 'sv1';
+let generatedSV1 = '', generatedSV2 = '', generatedSV3 = '';
+
+const storyTypeLabels = {
+  open: '日常開店型',
+  product: '品項介紹型',
+  interact: '互動提升型',
+  emotion: '情緒共感型',
+  gift: '送禮場景型',
+  knowledge: '知識教學型',
+  newstock: '新貨到場型',
+  numerology: '生命靈數型'
 };
+
+const storyTypePrompts = {
+  open: `格式：今日開店 / 到門市的邀請。開頭描述一個你今天看到或感覺到的東西（水晶、光線、氛圍），接著溫暖邀請大家來，最後加上一個親切的 CTA（歡迎來看看 / 私訊預約）。字數 50-80 字，句子短，親切自然，不像廣告。`,
+  product: `格式：品項聚焦展示。先寫品項名稱 + 視覺風格描述（用「×」連接），再一句話說這顆的能量或適合的狀態，最後引導私訊或到門市看。字數 60-100 字，有節奏感，每行不超過 20 字。`,
+  interact: `格式：設計一個讓人想回應的互動型限動。先提出一個跟水晶或狀態相關的問題，讓觀眾感覺「這在說我」，接著說要加投票框或問答框，最後說看到結果會主動私訊推薦。字數 60-90 字。`,
+  emotion: `格式：夜晚或情緒共鳴型。開頭用一個生活場景或情緒畫面切入（不要直接說水晶），中段呼應那種感覺，結尾才輕輕帶出水晶和邀請。文字有詩意，留白，句子短。字數 50-80 字。`,
+  gift: `格式：送禮情境引導。從「不知道送什麼好」或「想讓對方感覺被懂」的角度切入，說水晶是一份「觀察到對方狀態」的心意，最後問「告訴我對方的狀態，我幫你選」。字數 70-100 字。`,
+  knowledge: `格式：實用知識型，但不要太像教科書。一個知識點切入（淨化 / 搭配 / 選購），用問句開頭或一個有共鳴的情境，然後給 2-3 個簡短知識點，最後引導「有問題可以私訊」。字數 80-120 字。`,
+  newstock: `格式：新到貨開箱感。用「剛到」或「今天來了」開場，描述一個你第一眼看到這批貨的感受，接著說先到先問 / 今日限量，最後引導私訊。要有稀缺感但不要強迫推銷。字數 50-80 字。`,
+  numerology: `格式：生命靈數空缺數話題。從「你知道你的出生日期裡藏著什麼嗎？」或類似切入點開始，解釋空缺數的概念（用最白話的方式，1-2 句），然後邀請「私訊我你的生日，我幫你算 + 推薦」。字數 80-110 字。`
+};
+
+const storyInteractSuggestions = {
+  open: '加「問答框」：「今天想看什麼類型的水晶？」',
+  product: '加「貼圖投票」：問觀眾喜歡哪種風格或顏色',
+  interact: '必加投票框或問答框！看完結果主動私訊得票者',
+  emotion: '加「問答框」：「你今晚的狀態是？」夜間互動率高',
+  gift: '加「問答框」：「你想送給誰？媽媽 / 朋友 / 自己」',
+  knowledge: '加「問答框」：「你都怎麼淨化水晶？」激發分享',
+  newstock: '加「倒數計時」貼圖，製造稀缺緊迫感',
+  numerology: '加「問答框」：「你的生命靈數是幾？」直接開啟諮詢'
+};
+
+function selectStoryType(el, type) {
+  document.querySelectorAll('.story-type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedStoryType = type;
+}
+
+function switchStoryOutput(tab) {
+  currentStoryOutputTab = tab;
+  ['sv1','sv2','sv3'].forEach(t => {
+    document.getElementById('output' + t.toUpperCase()).style.display = t === tab ? 'block' : 'none';
+  });
+  document.getElementById('stTabV1btn').className = 'output-tab' + (tab==='sv1'?' active':'');
+  document.getElementById('stTabV2btn').className = 'output-tab' + (tab==='sv2'?' active':'');
+  document.getElementById('stTabV3btn').className = 'output-tab' + (tab==='sv3'?' active':'');
+}
+
+async function generateStory() {
+  const item = document.getElementById('storyItemName').value.trim();
+  const effect = document.getElementById('storyEffect').value;
+  const holiday = document.getElementById('storyHoliday').value;
+  const extra = document.getElementById('storyExtra').value.trim();
+  const typeLabel = storyTypeLabels[selectedStoryType];
+  const typePrompt = storyTypePrompts[selectedStoryType];
+
+  document.getElementById('storyGenBtn').disabled = true;
+
+  const loading = (msg) => `<div style="text-align:center;padding:40px 0"><div style="color:var(--text-light);font-size:13px;margin-bottom:12px">${msg}</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('outputSV1').innerHTML = loading('生成版本 A…');
+  document.getElementById('outputSV2').innerHTML = loading('生成版本 B…');
+  document.getElementById('outputSV3').innerHTML = loading('生成版本 C…');
+
+  const brand = `你是「騏藝逸品 QIYI Crystal」的限時動態文案寫手。
+品牌定位：人生狀態顧問型水晶品牌。
+語氣：溫暖、真誠、有質感，不強銷，先理解再建議。
+限動格式要求：字數短（50-120字），短句多，每行不超過25字，有換行節奏，結尾適當 emoji（1-2個即可）。
+不要加 hashtag，限動不需要。`;
+
+  const itemTxt = item ? `\n主打品項：${item}` : '';
+  const effectTxt = `\n功效/狀態方向：${effect}`;
+  const holidayTxt = holiday ? `\n節日/情境：${holiday}` : '';
+  const extraTxt = extra ? `\n補充：${extra}` : '';
+  const context = itemTxt + effectTxt + holidayTxt + extraTxt;
+
+  const makePrompt = (style, styleDesc) =>
+    `${brand}\n\n限動類型：${typeLabel}\n${typePrompt}\n\n文案風格：${styleDesc}${context}\n\n直接輸出限動文案，不要說明文字。`;
+
+  try {
+    const [sv1, sv2, sv3] = await Promise.all([
+      callGeminiAPI(makePrompt('A', '顧問型：先說適合的狀態或人，再帶品項，有邏輯感，讓人覺得「你真的懂我」')),
+      callGeminiAPI(makePrompt('B', '感性型：用情緒或畫面切入，文字有詩意、留白，不直接說功效，讓人感覺被陪伴')),
+      callGeminiAPI(makePrompt('C', '互動型：設計一個讓觀眾想回應的問題或投票，最後引導私訊，製造雙向對話'))
+    ]);
+    generatedSV1 = sv1; generatedSV2 = sv2; generatedSV3 = sv3;
+    document.getElementById('outputSV1').innerText = sv1;
+    document.getElementById('outputSV2').innerText = sv2;
+    document.getElementById('outputSV3').innerText = sv3;
+
+    // Show interact suggestion
+    const sug = document.getElementById('storyInteractSuggestion');
+    document.getElementById('storyInteractContent').textContent = storyInteractSuggestions[selectedStoryType] || '';
+    sug.style.display = 'block';
+  } catch(e) {
+    const errorMsg = e.message === 'API Key missing' ? '⚠️ 請先於右上角輸入 Google API Key。' : '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
+    ['outputSV1','outputSV2','outputSV3'].forEach(id => {
+      document.getElementById(id).innerHTML = `<div style="color:#E8956C;padding:20px">${errorMsg}</div>`;
+    });
+  }
+  document.getElementById('storyGenBtn').disabled = false;
+}
+
+function copyStoryOutput() {
+  const map = { sv1: generatedSV1, sv2: generatedSV2, sv3: generatedSV3 };
+  const text = map[currentStoryOutputTab];
+  if (!text) return;
+  copyText(text);
+}
+
+// ── INIT ──
+const savedKey = localStorage.getItem('qiyi_api_key');
+if(savedKey) document.getElementById('googleApiKey').value = savedKey;
+
+renderCalendar();
+renderPosts();
+renderStories();
 </script>
 </body>
 </html>
