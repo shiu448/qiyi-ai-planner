@@ -1327,14 +1327,11 @@ let uploadedImageMimeType = null; // 儲存上傳圖片的類型
 
 // 加入 imageBase64 與 mimeType 參數，支援視覺處理
 async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
-  const apiKey = document.getElementById('googleApiKey').value.trim();
-  if (!apiKey) {
-    showToast('⚠️ 請先於右上角輸入 Google API Key');
-    throw new Error('API Key missing');
-  }
+  // 允許留空，讓預覽環境可以自動注入內建的 API Key
+  const apiKey = document.getElementById('googleApiKey').value.trim() || "";
   
-  // 改用通用且穩定的 gemini-1.5-flash 模型，適用於一般公開的 API Key
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  // 修正：必須使用此環境專屬支援的模型名稱，解決 not found 錯誤
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
   
   // 如果有圖片，則組合成多模態 (Multimodal) 結構發送
   const parts = [];
@@ -1461,8 +1458,8 @@ async function generatePost() {
     document.getElementById('outputV2').innerText = v2;
   } catch (err) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
-    if (err.message === 'API Key missing') {
-        errorMsg = '⚠️ 請先於右上角輸入 Google API Key。';
+    if (err.message.includes('API_KEY_INVALID')) {
+        errorMsg = '⚠️ API Key 無效，請檢查右上角的設定。';
     } else if (err.message) {
         // 顯示具體錯誤，幫助除錯
         errorMsg = `⚠️ 生成失敗：${err.message}`;
@@ -1967,8 +1964,8 @@ async function generateStory() {
     sug.style.display = 'block';
   } catch(e) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
-    if (e.message === 'API Key missing') {
-        errorMsg = '⚠️ 請先於右上角輸入 Google API Key。';
+    if (e.message.includes('API_KEY_INVALID')) {
+        errorMsg = '⚠️ API Key 無效，請檢查右上角的設定。';
     } else if (e.message) {
         errorMsg = `⚠️ 生成失敗：${e.message}`;
     }
