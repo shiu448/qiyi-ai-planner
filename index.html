@@ -136,7 +136,9 @@
   .form-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; display: block; }
   .form-input, .form-select, .form-textarea { width: 100%; background: var(--dark3); border: 1px solid var(--border); border-radius: 8px; color: var(--cream); padding: 10px 14px; font-size: 13px; font-family: inherit; }
   .btn-generate { width: 100%; padding: 14px; background: var(--gold); border: none; border-radius: 10px; color: var(--dark); font-weight: 700; cursor: pointer; }
-  .output-area { background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-height: 200px; font-size: 13px; line-height: 1.8; white-space: pre-line; }
+  .btn-generate:disabled { opacity: 0.6; cursor: wait; }
+  .output-area { background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-height: 200px; font-size: 13px; line-height: 1.8; white-space: pre-line; color: var(--cream2); }
+  .output-placeholder { color: var(--text-light); text-align: center; padding-top: 60px; }
 
   /* ── STORIES ── */
   .stories-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:20px; }
@@ -145,9 +147,22 @@
   .story-copy { background:var(--dark3); border:1px solid var(--border); border-radius:8px; padding:12px; font-size:13px; white-space:pre-line; margin-bottom:10px; }
   .shot-item { background:var(--dark3); border-radius:8px; padding:8px; font-size:12px; }
 
+  .output-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .output-tab {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px;
+    cursor: pointer; border: 1px solid var(--border); color: var(--text-light); background: none; font-family: inherit;
+  }
+  .output-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+
   /* Toast */
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark2); border: 1px solid var(--gold); color: var(--gold); padding: 12px 20px; border-radius: 8px; opacity: 0; transition: .3s; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark2); border: 1px solid var(--gold); color: var(--gold); padding: 12px 20px; border-radius: 8px; opacity: 0; transition: .3s; z-index: 9999; }
   .toast.show { opacity: 1; }
+
+  .loading-dots { display: inline-flex; gap: 4px; }
+  .loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: blink 1.2s infinite; }
+  .loading-dots span:nth-child(2) { animation-delay: .2s; }
+  .loading-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100% { opacity:.2; } 40% { opacity:1; } }
 
   @media(max-width: 768px) { .gen-layout, .api-panel { grid-template-columns: 1fr; } }
 </style>
@@ -161,11 +176,12 @@
   </div>
 </header>
 
+<!-- API KEY SETTINGS -->
 <div class="api-shell">
   <div class="api-panel">
     <div>
       <div class="api-title">🔐 Google Gemini API 設定</div>
-      <div class="api-sub">請輸入您的 API Key。金鑰將加密儲存於您的瀏覽器中。</div>
+      <div class="api-sub">請輸入您的 Google Gemini API Key。金鑰將儲存於您的瀏覽器本地。</div>
       <div class="api-status" id="apiKeyStatus">尚未設定金鑰</div>
     </div>
     <div>
@@ -220,26 +236,28 @@
         <input class="form-input" id="crystalName" placeholder="例：粉晶手串" />
       </div>
       <div class="form-group">
-        <label class="form-label">主要功效</label>
+        <label class="form-label">主要功效 / 狀態方向</label>
         <select class="form-select" id="crystalEffect">
-          <option value="情緒安定">🌙 穩住自己 (情緒)</option>
-          <option value="財運事業">💰 打開運勢 (財運)</option>
-          <option value="桃花感情">💕 關係升溫 (桃花)</option>
+          <option value="情緒安定、穩住自己">🌙 穩住自己 (情緒安定)</option>
+          <option value="財運、事業、行動力">💰 打開運勢 (財運事業)</option>
+          <option value="桃花、感情、人際關係">💕 關係升溫 (桃花感情)</option>
+          <option value="重啟、轉換、新開始">🌱 重新開始 (轉換能量)</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">補充說明</label>
+        <label class="form-label">補充說明 (如：適合送禮、今日到貨等)</label>
         <textarea class="form-textarea" id="extraNotes"></textarea>
       </div>
-      <button class="btn-generate" id="genBtn" onclick="generatePost()">✨ 生成貼文</button>
+      <button class="btn-generate" id="genBtn" onclick="generatePost()">✨ 生成雙版本貼文</button>
     </div>
     <div class="gen-panel">
       <div class="output-tabs">
-        <button class="output-tab active" onclick="switchOutput('v1')">顧問型</button>
-        <button class="output-tab" onclick="switchOutput('v2')">感性型</button>
+        <button class="output-tab active" id="tabV1btn" onclick="switchOutput('v1')">顧問型</button>
+        <button class="output-tab" id="tabV2btn" onclick="switchOutput('v2')">感性型</button>
       </div>
-      <div class="output-area" id="outputV1"></div>
-      <div class="output-area" id="outputV2" style="display:none"></div>
+      <div class="output-area" id="outputV1"><div class="output-placeholder">填入左側資訊後點擊生成</div></div>
+      <div class="output-area" id="outputV2" style="display:none"><div class="output-placeholder">填入左側資訊後點擊生成</div></div>
+      <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); margin-top:16px;" onclick="copyOutput()">複製當前內容</button>
     </div>
   </div>
 </div>
@@ -248,7 +266,7 @@
 <div id="tab-strategy" class="section">
   <div class="section-title">品牌發文策略</div>
   <div class="gen-panel">
-    <div class="card-title">品牌定位：人生狀態顧問型</div>
+    <div class="card-title" style="margin-bottom:12px; color:var(--gold);">品牌定位：人生狀態顧問型</div>
     <div class="card-body">
       1. **狀態共感文 (40%)**：不賣產品，先聊「你最近怎麼了」。<br>
       2. **顧問式產品文 (45%)**：先說適合的人，再說為什麼是這顆水晶。<br>
@@ -262,7 +280,7 @@
 <script>
 // ── DATA: POSTS ──
 const postData = [
-  { date: "2025-03-26", type: "consult", typeLabel: "顧問型", title: "為什麼你買了很多水晶，但感覺沒變？", crystal: "黑碧璽 + 白水晶", v1: "你最近有沒有這種感覺——明明買了好幾條手串，卻還是覺得「沒什麼用」？問題往往不是水晶沒效，而是你選的方向跟你現在的狀態對不上。水晶不是許願池，是「狀態的輔助工具」。先搞清楚你最近最缺的是什麼，再來選。", v2: "買了好多水晶，卻好像什麼都沒改變？或許不是水晶的問題，是你還沒找到那顆「剛好對的」。水晶最神奇的地方，不是它有多厲害，而是當你帶著它的時候，你會開始願意相信自己。" },
+  { date: "2025-03-26", type: "consult", typeLabel: "顧問型", title: "為什麼你買了很多水晶，但感覺還是沒變？", crystal: "黑碧璽 + 白水晶", v1: "你最近有沒有這種感覺——明明買了好幾條手串，卻還是覺得「沒什麼用」？問題往往不是水晶沒效，而是你選的方向跟你現在的狀態對不上。水晶不是許願池，是「狀態的輔助工具」。先搞清楚你最近最缺的是什麼，再來選。", v2: "買了好多水晶，卻好像什麼都沒改變？或許不是水晶的問題，是你還沒找到那顆「剛好對的」。水晶最神奇的地方，不是它有多厲害，而是當你帶著它的時候，你會開始願意相信自己。" },
   { date: "2025-03-28", type: "crystal", typeLabel: "品項型", title: "睡不好、心很散？這顆是你現在需要的", crystal: "紫水晶球", v1: "如果你最近常常睡到一半醒來，或者腦袋停不下來，思緒很亂——這是身體在告訴你：你的能量需要整理了。紫水晶是我最常推薦「情緒安定線」的首選。", v2: "有些夜晚特別難熬。思緒停不下來，睡了又醒，好像心裡一直有什麼東西沒放下。紫水晶不會幫你解決問題，但它會陪你安靜下來。" }
 ];
 
@@ -272,58 +290,118 @@ const storiesData = [
   { id: 2, title: '品項聚焦展示', icon: '💎', crystal: '銀曜石 × 硃砂', copyA: '銀曜石 × 硃砂 🖤❤️\n低調，卻很有氣場。保護能量 × 穩定磁場。' }
 ];
 
-// ── API LOGIC ──
+// ── API KEY LOGIC ──
+function getApiKey() {
+  return localStorage.getItem('qiyi_gemini_key') || '';
+}
+
 function saveApiKey() {
-  const key = document.getElementById('googleApiKey').value.trim();
-  if(!key) return alert('請輸入 Key');
+  const keyInput = document.getElementById('googleApiKey');
+  const key = keyInput.value.trim();
+  if (!key) return alert('請輸入 API Key');
   localStorage.setItem('qiyi_gemini_key', key);
   updateApiKeyStatus();
-  showToast('金鑰已儲存');
+  showToast('金鑰已成功儲存');
 }
 
 function clearApiKey() {
   localStorage.removeItem('qiyi_gemini_key');
   document.getElementById('googleApiKey').value = '';
   updateApiKeyStatus();
+  showToast('金鑰已清除');
 }
 
 function updateApiKeyStatus() {
-  const key = localStorage.getItem('qiyi_gemini_key');
-  const status = document.getElementById('apiKeyStatus');
-  if(key) status.innerHTML = `<span class="status-ok">● 金鑰已就緒</span> (${key.slice(0,5)}...)`;
-  else status.innerHTML = `<span class="status-warn">● 尚未設定金鑰</span>`;
+  const key = getApiKey();
+  const statusEl = document.getElementById('apiKeyStatus');
+  if (key) {
+    const maskedKey = key.substring(0, 6) + '...' + key.substring(key.length - 4);
+    statusEl.innerHTML = `<span class="status-ok">● 金鑰已就緒</span> (${maskedKey})`;
+    document.getElementById('googleApiKey').value = key;
+  } else {
+    statusEl.innerHTML = `<span class="status-warn">● 尚未設定金鑰</span>`;
+  }
 }
 
-async function callGemini(prompt) {
-  const apiKey = localStorage.getItem('qiyi_gemini_key');
-  if(!apiKey) throw new Error('請先設定 API Key');
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+// ── AI LOGIC ──
+const SYSTEM_PROMPT = `你是「騏藝逸品 QIYI Crystal」的品牌社群文案寫手。
+品牌定位：「人生狀態顧問型水晶品牌」。
+核心理念：不只是賣產品，而是幫人透過水晶整理當下狀態。
+語氣：溫暖、真誠、懂人心、專業且不強推。
+注意事項：請避免任何醫療效能暗示（如治療、痊癒），改用陪伴、平衡、整理能量、穩住狀態等語法。`;
+
+async function callGemini(userPrompt) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    alert('請先在頁面頂端設定 Google Gemini API Key');
+    throw new Error('MISSING_API_KEY');
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  
+  const payload = {
+    contents: [{ parts: [{ text: userPrompt }] }],
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+  };
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    body: JSON.stringify(payload)
   });
-  const data = await resp.json();
-  if(!resp.ok) throw new Error(data.error.message);
-  return data.candidates[0].content.parts[0].text;
+
+  const data = await response.json();
+  if (!response.ok) {
+    const errorMsg = data.error?.message || 'API 呼叫失敗';
+    throw new Error(errorMsg);
+  }
+
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
+let generatedV1 = '', generatedV2 = '';
+let currentOutputView = 'v1';
+
 async function generatePost() {
-  const name = document.getElementById('crystalName').value;
-  if(!name) return alert('請輸入名稱');
+  const name = document.getElementById('crystalName').value.trim();
+  if (!name) return alert('請輸入水晶名稱');
   const effect = document.getElementById('crystalEffect').value;
+  const notes = document.getElementById('extraNotes').value.trim();
   const btn = document.getElementById('genBtn');
+
   btn.disabled = true;
-  btn.innerText = 'AI 思考中...';
-  
+  document.getElementById('outputV1').innerHTML = `<div style="text-align:center;padding-top:60px;"><div class="loading-dots"><span></span><span></span><span></span></div><br><span style="font-size:12px;color:var(--text-light);">AI 正在構思文案...</span></div>`;
+  document.getElementById('outputV2').innerHTML = `<div style="text-align:center;padding-top:60px;"><div class="loading-dots"><span></span><span></span><span></span></div><br><span style="font-size:12px;color:var(--text-light);">AI 正在構思文案...</span></div>`;
+
+  const prompt = `請針對以下水晶產品產出兩版社群文案。
+品項：${name}
+功效方向：${effect}
+補充資訊：${notes || '無'}
+
+要求：
+版本 A (顧問型)：從人們常見的生活困擾或心理狀態切入，給予顧問式建議。
+版本 B (感性型)：文字詩意、有畫面感，強調情感連結。
+每篇約 150-250 字。
+請用 JSON 格式回傳，欄位為 "v1" 和 "v2"。`;
+
   try {
-    const prompt = `你是「騏藝逸品」文案顧問。品項：${name}，功效：${effect}。請寫出兩版 IG 文案：1.顧問型（專業建議）2.感性型（情緒共鳴）。請用 [V1] [V2] 分隔。`;
-    const res = await callGemini(prompt);
-    const split = res.split('[V2]');
-    document.getElementById('outputV1').innerText = split[0].replace('[V1]', '').trim();
-    document.getElementById('outputV2').innerText = split[1] ? split[1].trim() : '';
-  } catch(e) { alert(e.message); }
-  btn.disabled = false;
-  btn.innerText = '✨ 生成貼文';
+    const resultText = await callGemini(prompt + "\n請務必只回傳純 JSON 內容。");
+    // 簡單過濾可能的多餘文字
+    const jsonStr = resultText.match(/\{[\s\S]*\}/)?.[0] || resultText;
+    const data = JSON.parse(jsonStr);
+    
+    generatedV1 = data.v1 || resultText;
+    generatedV2 = data.v2 || "";
+    
+    document.getElementById('outputV1').innerText = generatedV1;
+    document.getElementById('outputV2').innerText = generatedV2;
+  } catch (e) {
+    const errorDisplay = `<div style="color:var(--status-error);padding:20px;">生成失敗：${e.message}</div>`;
+    document.getElementById('outputV1').innerHTML = errorDisplay;
+    document.getElementById('outputV2').innerHTML = errorDisplay;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── UI LOGIC ──
@@ -331,34 +409,58 @@ function showTab(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const activeTab = Array.from(document.querySelectorAll('.tab')).find(t => t.innerText.includes(name === 'posts' ? '貼文庫' : name === 'stories' ? '限動模板' : name === 'generator' ? '產生器' : name === 'strategy' ? '策略' : '貼文日曆'));
+  if (activeTab) activeTab.classList.add('active');
 }
 
 function switchOutput(v) {
-  document.getElementById('outputV1').style.display = v==='v1'?'block':'none';
-  document.getElementById('outputV2').style.display = v==='v2'?'block':'none';
+  currentOutputView = v;
+  document.getElementById('outputV1').style.display = v === 'v1' ? 'block' : 'none';
+  document.getElementById('outputV2').style.display = v === 'v2' ? 'block' : 'none';
+  document.querySelectorAll('#tab-generator .output-tab').forEach(btn => btn.classList.remove('active'));
+  event.currentTarget.classList.add('active');
 }
+
+function copyOutput() {
+  const text = currentOutputView === 'v1' ? generatedV1 : generatedV2;
+  if (!text || text.includes('填入左側資訊')) return;
+  navigator.clipboard.writeText(text).then(() => showToast('文案已複製'));
+}
+
+let currentYear = 2025, currentMonth = 2; // 3月
 
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
-  document.getElementById('monthLabel').innerText = '2025 年 3 月';
-  grid.innerHTML = '';
-  for(let i=1; i<=31; i++) {
-    const dateStr = `2025-03-${String(i).padStart(2,'0')}`;
+  const months = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('monthLabel').innerText = `${currentYear} 年 ${months[currentMonth]}`;
+  
+  grid.innerHTML = ['日','一','二','三','四','五','六'].map(d => `<div class="cal-day-label">${d}</div>`).join('');
+  
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  
+  for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
+  
+  for(let i=1; i<=daysInMonth; i++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
     const post = postData.find(p => p.date === dateStr);
     grid.innerHTML += `<div class="cal-day">
       <div class="day-num">${i}</div>
-      ${post ? `<div class="day-tag tag-${post.type}">${post.typeLabel}</div>` : ''}
+      ${post ? `<div class="day-tag tag-${post.type}">${post.typeLabel}</div><div class="post-dot"></div>` : ''}
     </div>`;
   }
 }
+
+function prevMonth() { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); }
+function nextMonth() { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); }
 
 function renderPosts() {
   const grid = document.getElementById('postsGrid');
   grid.innerHTML = postData.map(p => `<div class="post-card">
     <div class="card-title">${p.title}</div>
-    <div class="card-crystal">🔮 ${p.crystal}</div>
-    <div class="card-body">${p.v1}</div>
+    <div class="card-crystal" style="font-size:12px;">🔮 ${p.crystal}</div>
+    <div class="card-body" style="height:120px;overflow:hidden;mask-image:linear-gradient(to bottom, black 60%, transparent 100%);">${p.v1}</div>
+    <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:8px; font-size:12px;" onclick="navigator.clipboard.writeText(\`${p.v1}\`);showToast('已複製預設文案');">複製預設文案</button>
   </div>`).join('');
 }
 
@@ -366,8 +468,9 @@ function renderStories() {
   const grid = document.getElementById('storiesGrid');
   grid.innerHTML = storiesData.map(s => `<div class="story-card">
     <div class="story-card-body">
-      <div class="card-title">${s.icon} ${s.title}</div>
-      <div class="story-copy">${s.copyA}</div>
+      <div class="card-title" style="font-size:14px;">${s.icon} ${s.title}</div>
+      <div class="story-copy" style="font-size:12px;">${s.copyA}</div>
+      <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:6px; font-size:11px;" onclick="navigator.clipboard.writeText(\`${s.copyA}\`);showToast('已複製限動文案');">複製</button>
     </div>
   </div>`).join('');
 }
