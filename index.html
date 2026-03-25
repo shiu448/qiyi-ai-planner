@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>騏藝逸品｜AI 社群內容系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8D5A0;
+    --dark: #1A1612;
+    --dark2: #2C2520;
+    --dark3: #3D3530;
+    --cream: #F5EFE0;
+    --text: #3A2E25;
+    --text-light: #6B5A48;
+    --border: rgba(201,168,76,0.25);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--dark); color: var(--cream); min-height: 100vh; }
+
+  header { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'Noto Serif TC', serif; font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+  .logo span { color: var(--cream); font-weight: 300; font-size: 13px; display:block; margin-top: 2px; }
+
+  /* ── API SETTINGS ── */
+  .api-shell { max-width: 1200px; margin: 20px auto; padding: 0 32px; }
+  .api-panel { background: rgba(201,168,76,0.08); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 16px; align-items: end; }
+  .api-title { font-size: 14px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+  .api-status { font-size: 12px; margin-top: 8px; }
+  .status-ok { color: #7EC8A0; }
+  .status-warn { color: #E8D5A0; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; background: var(--dark2); border-bottom: 1px solid var(--border); padding: 0 32px; gap: 8px; }
+  .tab { padding: 16px 20px; font-size: 14px; color: var(--text-light); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 600; }
+
+  .section { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* ── FORM ── */
+  .gen-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .gen-panel { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--gold-light); margin-bottom: 8px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--dark3); border: 1px solid var(--border); border-radius: 8px; color: var(--cream); padding: 12px; font-size: 14px; }
+  .btn-generate { width: 100%; padding: 14px; background: var(--gold); border: none; border-radius: 10px; color: var(--dark); font-weight: 700; cursor: pointer; margin-top: 10px; }
+  .btn-generate:disabled { opacity: 0.5; }
+
+  .output-area { background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-height: 250px; font-size: 14px; line-height: 1.8; white-space: pre-line; position: relative; }
+  .output-placeholder { color: var(--text-light); text-align: center; padding-top: 80px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark2); border: 1px solid var(--gold); color: var(--gold); padding: 12px 24px; border-radius: 8px; opacity: 0; transition: 0.3s; z-index: 9999; }
+  .toast.show { opacity: 1; }
+
+  @media(max-width: 768px) { .gen-layout, .api-panel { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">騏藝逸品 QIYI Crystal<span>AI 社群貼文輔助系統</span></div>
+</header>
+
+<div class="api-shell">
+  <div class="api-panel">
+    <div>
+      <div class="api-title">🔑 Google Gemini API 設定</div>
+      <div style="font-size: 12px; color: var(--text-light)">請輸入 API Key 以啟用 AI 生成功能。金鑰僅儲存於您的瀏覽器。</div>
+      <div class="api-status" id="apiKeyStatus">尚未設定金鑰</div>
+    </div>
+    <div>
+      <input class="form-input" id="googleApiKey" type="password" placeholder="貼上您的 API Key" />
+    </div>
+    <div>
+      <button class="btn-generate" style="padding: 10px 20px; margin: 0" onclick="saveApiKey()">儲存金鑰</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('posts')">✍️ 貼文產生器</div>
+  <div class="tab" onclick="showTab('stories')">📱 限動文案機</div>
+</div>
+
+<div id="tab-posts" class="section active">
+  <div class="gen-layout">
+    <div class="gen-panel">
+      <div class="form-group">
+        <label class="form-label">水晶品項名稱 *</label>
+        <input class="form-input" id="crystalName" placeholder="例：粉晶手串、紫晶洞">
+      </div>
+      <div class="form-group">
+        <label class="form-label">主打狀態方向</label>
+        <select class="form-select" id="crystalEffect">
+          <option value="穩住自己 — 情緒安定、保護">🌙 穩住自己 (情緒/保護)</option>
+          <option value="打開運勢 — 財運、事業氣場">💰 打開運勢 (財運/事業)</option>
+          <option value="關係升溫 — 桃花、感情人際">💕 關係升溫 (桃花/人際)</option>
+          <option value="重新開始 — 轉換期、重啟能量">🌱 重新開始 (轉換/重啟)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">補充說明 (如：限量、特價、適合送誰)</label>
+        <textarea class="form-textarea" id="extraNotes" placeholder="額外想提到的資訊..."></textarea>
+      </div>
+      <button class="btn-generate" id="genBtn" onclick="generateContent('post')">✨ 生成雙版本貼文</button>
+    </div>
+    <div class="gen-panel">
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button class="tab active" style="padding:5px 15px" id="outV1Btn" onclick="switchOut('v1')">顧問型</button>
+        <button class="tab" style="padding:5px 15px" id="outV2Btn" onclick="switchOut('v2')">感性型</button>
+      </div>
+      <div class="output-area" id="outputV1"><div class="output-placeholder">文案將顯示於此...</div></div>
+      <div class="output-area" id="outputV2" style="display:none"></div>
+      <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); margin-top:15px;" onclick="copyResult()">複製當前文案</button>
+    </div>
+  </div>
+</div>
+
+<div id="tab-stories" class="section">
+  <div class="gen-layout">
+    <div class="gen-panel">
+      <div class="form-group">
+        <label class="form-label">限動類型</label>
+        <select class="form-select" id="storyType">
+          <option value="日常開店">🏪 日常開店 (今日營業/到貨)</option>
+          <option value="品項聚焦">💎 品項聚焦 (單品細節展示)</option>
+          <option value="互動提問">💬 互動提問 (投票/問答框)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">提及品項</label>
+        <input class="form-input" id="storyItem" placeholder="此限動的主角水晶">
+      </div>
+      <button class="btn-generate" id="storyGenBtn" onclick="generateContent('story')">📱 生成 3 款限動文案</button>
+    </div>
+    <div class="gen-panel">
+      <div class="output-area" id="outputStory"><div class="output-placeholder">限動文案生成區...</div></div>
+      <button class="btn-generate" style="background:none; border:1px solid var(--gold); color:var(--gold); margin-top:15px;" onclick="copyStory()">複製全部限動</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ 已複製到剪貼簿</div>
+
+<script>
+let v1Text = '', v2Text = '';
+
+// API Key Logic
+function saveApiKey() {
+  const key = document.getElementById('googleApiKey').value.trim();
+  if(!key) return alert('請輸入 Key');
+  localStorage.setItem('qiyi_gemini_key', key);
+  updateKeyStatus();
+  showToast('金鑰已儲存');
+}
+
+function updateKeyStatus() {
+  const key = localStorage.getItem('qiyi_gemini_key');
+  const status = document.getElementById('apiKeyStatus');
+  if(key) {
+    status.innerHTML = `<span class="status-ok">● 已連線</span> (${key.slice(0,5)}***${key.slice(-3)})`;
+  } else {
+    status.innerHTML = `<span class="status-warn">● 尚未設定</span>`;
+  }
+}
+
+// Tab Logic
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function switchOut(v) {
+  document.getElementById('outputV1').style.display = v==='v1'?'block':'none';
+  document.getElementById('outputV2').style.display = v==='v2'?'block':'none';
+  document.getElementById('outV1Btn').classList.toggle('active', v==='v1');
+  document.getElementById('outV2Btn').classList.toggle('active', v==='v2');
+}
+
+// Gemini API Core
+async function callGemini(prompt) {
+  const apiKey = localStorage.getItem('qiyi_gemini_key');
+  if(!apiKey) throw new Error('請先設定 API Key');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  });
+  
+  const data = await response.json();
+  if(!response.ok) throw new Error(data.error.message);
+  return data.candidates[0].content.parts[0].text;
+}
+
+// Brand Context
+const brandContext = `你是「騏藝逸品 QIYI Crystal」的文案專家。品牌定位：人生狀態顧問型水晶。語氣：溫暖、有質感、不強推。`;
+
+async function generateContent(mode) {
+  const btn = mode === 'post' ? document.getElementById('genBtn') : document.getElementById('storyGenBtn');
+  btn.disabled = true;
+  btn.innerText = 'AI 思考中...';
+
+  try {
+    if(mode === 'post') {
+      const name = document.getElementById('crystalName').value;
+      const effect = document.getElementById('crystalEffect').value;
+      const extra = document.getElementById('extraNotes').value;
+      
+      const prompt = `${brandContext} 請針對「${name}」(${effect}) 寫出兩篇 IG 文案。
+      版本 A (顧問型)：從客人焦慮/狀態切入，給予顧問式建議。
+      版本 B (感性型)：文學感、重視情緒連結與陪伴感。
+      補充：${extra}。
+      請用「版本A:」與「版本B:」標記。`;
+
+      const result = await callGemini(prompt);
+      const split = result.split(/版本B:|版本 B:/i);
+      v1Text = split[0].replace(/版本A:|版本 A:/i, '').trim();
+      v2Text = split[1] ? split[1].trim() : '';
+      
+      document.getElementById('outputV1').innerText = v1Text;
+      document.getElementById('outputV2').innerText = v2Text;
+    } else {
+      const type = document.getElementById('storyType').value;
+      const item = document.getElementById('storyItem').value;
+      const prompt = `${brandContext} 請寫出 3 個「${type}」類型的 IG 限動文案，主角是「${item}」。字數極簡、每行不超過 15 字，多換行。`;
+      document.getElementById('outputStory').innerText = await callGemini(prompt);
+    }
+  } catch (e) {
+    alert('錯誤: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = mode==='post' ? '✨ 生成雙版本貼文' : '📱 生成 3 款限動文案';
+  }
+}
+
+function copyResult() {
+  const text = document.getElementById('outputV1').style.display !== 'none' ? v1Text : v2Text;
+  navigator.clipboard.writeText(text);
+  showToast();
+}
+
+function copyStory() {
+  navigator.clipboard.writeText(document.getElementById('outputStory').innerText);
+  showToast();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if(msg) t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+window.onload = updateKeyStatus;
+</script>
+</body>
+</html>
