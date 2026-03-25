@@ -1323,16 +1323,33 @@ function escJs(s) { return s.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
 let currentOutputTab = 'v1';
 let generatedV1 = '', generatedV2 = '';
 let uploadedImageBase64 = null;
+let uploadedImageMimeType = null; // 儲存上傳圖片的類型
 
-async function callGeminiAPI(prompt) {
+// 加入 imageBase64 與 mimeType 參數，支援視覺處理
+async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
   const apiKey = document.getElementById('googleApiKey').value.trim();
   if (!apiKey) {
     showToast('⚠️ 請先於右上角輸入 Google API Key');
     throw new Error('API Key missing');
   }
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  
+  // 改用通用且穩定的 gemini-1.5-flash 模型，適用於一般公開的 API Key
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  
+  // 如果有圖片，則組合成多模態 (Multimodal) 結構發送
+  const parts = [];
+  if (imageBase64) {
+    parts.push({
+      inlineData: {
+        mimeType: mimeType || "image/jpeg",
+        data: imageBase64
+      }
+    });
+  }
+  parts.push({ text: prompt });
+
   const payload = {
-      contents: [{ parts: [{ text: prompt }] }]
+      contents: [{ parts: parts }]
   };
 
   const delays = [1000, 2000, 4000, 8000, 16000];
@@ -1343,11 +1360,19 @@ async function callGeminiAPI(prompt) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
-          if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+          
+          if (!resp.ok) {
+              const errData = await resp.json().catch(() => ({}));
+              throw new Error(errData.error?.message || `HTTP error! status: ${resp.status}`);
+          }
+          
           const data = await resp.json();
           return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       } catch (err) {
-          if (i === 4) throw err;
+          // 如果是 API Key 錯誤或模型找不到等根本性錯誤，直接拋出不再重試
+          if (err.message.includes('API_KEY_INVALID') || err.message.includes('not found') || i === 4) {
+              throw err;
+          }
           await new Promise(r => setTimeout(r, delays[i]));
       }
   }
@@ -1356,6 +1381,7 @@ async function callGeminiAPI(prompt) {
 function handleImageUpload(input) {
   const file = input.files[0];
   if (!file) return;
+  uploadedImageMimeType = file.type; // 紀錄類型
   const reader = new FileReader();
   reader.onload = e => {
     document.getElementById('previewImg').src = e.target.result;
@@ -1397,6 +1423,7 @@ async function generatePost() {
 
   const holiday_txt = holiday ? `\n結合節日/趨勢：${holiday}` : '';
   const extra_txt = extra ? `\n補充說明：${extra}` : '';
+  const image_txt = uploadedImageBase64 ? '\n（請根據隨附的這張水晶圖片的視覺特徵，將細節融入文案中）' : '';
 
   const promptV1 = `${brandContext}
 請寫一篇【顧問型】IG/FB 貼文，格式要求：
@@ -1407,7 +1434,7 @@ async function generatePost() {
 5. 結尾加上3-5個適合的 hashtag
 
 水晶品項：${name}
-功效/狀態：${effect}${holiday_txt}${extra_txt}
+功效/狀態：${effect}${holiday_txt}${extra_txt}${image_txt}
 
 請直接輸出貼文內容，不要任何說明文字。`;
 
@@ -1420,19 +1447,28 @@ async function generatePost() {
 5. 結尾加上3-5個適合的 hashtag
 
 水晶品項：${name}
-功效/狀態：${effect}${holiday_txt}${extra_txt}
+功效/狀態：${effect}${holiday_txt}${extra_txt}${image_txt}
 
 請直接輸出貼文內容，不要任何說明文字。`;
 
   try {
-    const [v1, v2] = await Promise.all([callGeminiAPI(promptV1), callGeminiAPI(promptV2)]);
+    const [v1, v2] = await Promise.all([
+        callGeminiAPI(promptV1, uploadedImageBase64, uploadedImageMimeType), 
+        callGeminiAPI(promptV2, uploadedImageBase64, uploadedImageMimeType)
+    ]);
     generatedV1 = v1; generatedV2 = v2;
     document.getElementById('outputV1').innerText = v1;
     document.getElementById('outputV2').innerText = v2;
   } catch (err) {
-    const errorMsg = err.message === 'API Key missing' ? '⚠️ 請先於右上角輸入 Google API Key。' : '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
-    document.getElementById('outputV1').innerHTML = `<div style="color:#E8956C;padding:20px">${errorMsg}</div>`;
-    document.getElementById('outputV2').innerHTML = `<div style="color:#E8956C;padding:20px">${errorMsg}</div>`;
+    let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
+    if (err.message === 'API Key missing') {
+        errorMsg = '⚠️ 請先於右上角輸入 Google API Key。';
+    } else if (err.message) {
+        // 顯示具體錯誤，幫助除錯
+        errorMsg = `⚠️ 生成失敗：${err.message}`;
+    }
+    document.getElementById('outputV1').innerHTML = `<div style="color:#E8956C;padding:20px;line-height:1.6">${errorMsg}</div>`;
+    document.getElementById('outputV2').innerHTML = `<div style="color:#E8956C;padding:20px;line-height:1.6">${errorMsg}</div>`;
   }
   document.getElementById('genBtn').disabled = false;
 }
@@ -1930,9 +1966,14 @@ async function generateStory() {
     document.getElementById('storyInteractContent').textContent = storyInteractSuggestions[selectedStoryType] || '';
     sug.style.display = 'block';
   } catch(e) {
-    const errorMsg = e.message === 'API Key missing' ? '⚠️ 請先於右上角輸入 Google API Key。' : '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
+    let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
+    if (e.message === 'API Key missing') {
+        errorMsg = '⚠️ 請先於右上角輸入 Google API Key。';
+    } else if (e.message) {
+        errorMsg = `⚠️ 生成失敗：${e.message}`;
+    }
     ['outputSV1','outputSV2','outputSV3'].forEach(id => {
-      document.getElementById(id).innerHTML = `<div style="color:#E8956C;padding:20px">${errorMsg}</div>`;
+      document.getElementById(id).innerHTML = `<div style="color:#E8956C;padding:20px;line-height:1.6">${errorMsg}</div>`;
     });
   }
   document.getElementById('storyGenBtn').disabled = false;
