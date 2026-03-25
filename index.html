@@ -1327,11 +1327,14 @@ let uploadedImageMimeType = null; // 儲存上傳圖片的類型
 
 // 加入 imageBase64 與 mimeType 參數，支援視覺處理
 async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
-  // 允許留空，讓預覽環境可以自動注入內建的 API Key
-  const apiKey = document.getElementById('googleApiKey').value.trim() || "";
-  
-  // 修正：必須使用此環境專屬支援的模型名稱，解決 not found 錯誤
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  const apiKey = document.getElementById('googleApiKey').value.trim();
+
+  // 【核心修正】
+  // 判斷是否為使用者自帶的 API Key（上線環境 vs 預覽環境）
+  // 上線環境 (GitHub Pages) 必須使用公開通用的 'gemini-1.5-flash' 模型
+  // 本地預覽環境則使用專屬的 'gemini-2.5-flash-preview-09-2025' 模型
+  const modelName = apiKey ? 'gemini-1.5-flash' : 'gemini-2.5-flash-preview-09-2025';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
   
   // 如果有圖片，則組合成多模態 (Multimodal) 結構發送
   const parts = [];
@@ -1366,8 +1369,12 @@ async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
           const data = await resp.json();
           return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       } catch (err) {
-          // 如果是 API Key 錯誤或模型找不到等根本性錯誤，直接拋出不再重試
-          if (err.message.includes('API_KEY_INVALID') || err.message.includes('not found') || i === 4) {
+          // 將常見的 API Key 錯誤統一轉換，方便 UI 顯示
+          if (err.message.includes('API key not valid') || err.message.includes('API_KEY_INVALID')) {
+              throw new Error('API_KEY_MISSING');
+          }
+          // 模型找不到或其他根本性錯誤直接拋出
+          if (err.message.includes('not found') || i === 4) {
               throw err;
           }
           await new Promise(r => setTimeout(r, delays[i]));
@@ -1458,8 +1465,8 @@ async function generatePost() {
     document.getElementById('outputV2').innerText = v2;
   } catch (err) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
-    if (err.message.includes('API_KEY_INVALID')) {
-        errorMsg = '⚠️ API Key 無效，請檢查右上角的設定。';
+    if (err.message === 'API_KEY_MISSING') {
+        errorMsg = '⚠️ 請先於右上角輸入有效的 Google API Key。';
     } else if (err.message) {
         // 顯示具體錯誤，幫助除錯
         errorMsg = `⚠️ 生成失敗：${err.message}`;
