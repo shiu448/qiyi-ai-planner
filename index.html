@@ -1328,15 +1328,22 @@ let uploadedImageMimeType = null; // 儲存上傳圖片的類型
 // 加入 imageBase64 與 mimeType 參數，支援視覺處理
 async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
   const apiKey = document.getElementById('googleApiKey').value.trim();
+  if (!apiKey) {
+    throw new Error('API_KEY_MISSING');
+  }
 
-  // 【核心修正】
-  // 判斷是否為使用者自帶的 API Key（上線環境 vs 預覽環境）
-  // 上線環境 (GitHub Pages) 必須使用公開通用的 'gemini-1.5-flash' 模型
-  // 本地預覽環境則使用專屬的 'gemini-2.5-flash-preview-09-2025' 模型
-  const modelName = apiKey ? 'gemini-1.5-flash' : 'gemini-2.5-flash-preview-09-2025';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  // 【自動降級/切換系統】
+  // 準備一系列標準且廣泛支援的 Gemini 模型清單。
+  // 系統會從最新的模型開始測試，若遇到不支援或報錯，會自動退回到較舊或更通用的版本。
+  const modelsToTry = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro-latest',
+    'gemini-pro'
+  ];
   
-  // 如果有圖片，則組合成多模態 (Multimodal) 結構發送
   const parts = [];
   if (imageBase64) {
     parts.push({
@@ -1352,8 +1359,14 @@ async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
       contents: [{ parts: parts }]
   };
 
-  const delays = [1000, 2000, 4000, 8000, 16000];
-  for (let i = 0; i < 5; i++) {
+  let lastErrorMsg = '';
+
+  for (const modelName of modelsToTry) {
+      // 舊版 gemini-pro (1.0) 不支援圖片解析，若有上傳圖片則跳過該模型
+      if (imageBase64 && modelName === 'gemini-pro') continue;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      
       try {
           const resp = await fetch(url, {
               method: "POST",
@@ -1363,23 +1376,34 @@ async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
           
           if (!resp.ok) {
               const errData = await resp.json().catch(() => ({}));
-              throw new Error(errData.error?.message || `HTTP error! status: ${resp.status}`);
+              throw new Error(errData.error?.message || `HTTP error ${resp.status}`);
           }
           
           const data = await resp.json();
-          return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (data.candidates && data.candidates.length > 0) {
+              // 成功取得回覆，直接回傳
+              return data.candidates[0].content.parts[0].text;
+          } else {
+              throw new Error("API 回傳格式異常，無法解析內容");
+          }
       } catch (err) {
-          // 將常見的 API Key 錯誤統一轉換，方便 UI 顯示
-          if (err.message.includes('API key not valid') || err.message.includes('API_KEY_INVALID')) {
+          lastErrorMsg = err.message;
+          // 若為 API Key 根本性無效，直接中斷所有測試
+          if (err.message.includes('API_KEY_INVALID') || err.message.includes('API key not valid')) {
               throw new Error('API_KEY_MISSING');
           }
-          // 模型找不到或其他根本性錯誤直接拋出
-          if (err.message.includes('not found') || i === 4) {
-              throw err;
+          // 若為模型找不到 (not found) 或不支援 (not supported)，繼續嘗試下一個模型
+          if (err.message.includes('not found') || err.message.includes('not supported')) {
+              console.warn(`[自動切換] ${modelName} 無法使用，嘗試下一個模型...`);
+              continue;
           }
-          await new Promise(r => setTimeout(r, delays[i]));
+          // 若為其他伺服器錯誤 (如 500)，也繼續嘗試
+          continue;
       }
   }
+  
+  // 如果迴圈跑完還是全部失敗，就把最後一個錯誤丟出去
+  throw new Error(lastErrorMsg || "無法連接到 AI 伺服器，請確認您的 API Key 權限。");
 }
 
 function handleImageUpload(input) {
@@ -1545,7 +1569,7 @@ const storiesData = [
     title: '單品聚焦 × 風格語言',
     crystal: '銀曜石 × 硃砂手串（類似高對比品項）',
     shot: [
-      { label: '角度', tip: '平拍 or 微仰，讓手串有量感' },
+      { label: '角度', tip: '平拍 or 微仰，让手串有量感' },
       { label: '背景', tip: '黑色大理石紋或深木色，突顯顏色對比' },
       { label: '光線', tip: '側光打亮，讓珠體有光澤感' },
       { label: '細節', tip: '近拍顯示珠面紋理，讓人感受質感' }
@@ -1971,8 +1995,8 @@ async function generateStory() {
     sug.style.display = 'block';
   } catch(e) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
-    if (e.message.includes('API_KEY_INVALID')) {
-        errorMsg = '⚠️ API Key 無效，請檢查右上角的設定。';
+    if (e.message === 'API_KEY_MISSING') {
+        errorMsg = '⚠️ 請先於右上角輸入有效的 Google API Key。';
     } else if (e.message) {
         errorMsg = `⚠️ 生成失敗：${e.message}`;
     }
