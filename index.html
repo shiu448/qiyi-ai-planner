@@ -419,6 +419,7 @@
   <div style="display:flex; align-items:center; gap:16px;">
     <input type="password" id="googleApiKey" class="api-key-input" placeholder="輸入 Google API Key" onchange="localStorage.setItem('qiyi_api_key', this.value)" />
     <div class="header-links">
+      <a href="admin.html" target="_blank" style="color: var(--gold); border-color: var(--gold);">⚙️ 排程後台</a>
       <a href="https://www.instagram.com/qiyicrystal/" target="_blank">📸 IG</a>
       <a href="https://www.facebook.com/people/%E9%A8%8F%E8%97%9D%E9%80%B8%E5%93%81-Qi-Yi-Crystal/61556083324281/" target="_blank">📘 FB</a>
     </div>
@@ -1159,7 +1160,7 @@ const postData = [
 每一顆礦石，都花了幾千萬年才長成這樣。
 就為了有一天，出現在你面前。
 
-有沒有覺得，這本身 মিঠ就是一件很神奇的事？
+有沒有覺得，這本身就是一件很神奇的事？
 
 謝謝大地，謝謝那些默默陪著我們的石頭。`,
     hashtags: "#騏藝逸品 #世界地球日 #地球日 #天然水晶 #礦石 #QIYICrystal #WorldEarthDay"
@@ -1327,21 +1328,21 @@ let uploadedImageMimeType = null; // 儲存上傳圖片的類型
 
 // 加入 imageBase64 與 mimeType 參數，支援視覺處理
 async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
-  const apiKey = document.getElementById('googleApiKey').value.trim();
+  // 環境提供的 API Key (如系統預設)，優先使用系統預設，若無再讀取輸入框
+  const envApiKey = ""; 
+  const apiKey = envApiKey || document.getElementById('googleApiKey').value.trim();
+  
   if (!apiKey) {
     throw new Error('API_KEY_MISSING');
   }
 
   // 【自動降級/切換系統】
-  // 準備一系列標準且廣泛支援的 Gemini 模型清單。
-  // 系統會從最新的模型開始測試，若遇到不支援或報錯，會自動退回到較舊或更通用的版本。
+  // 在這個特殊環境中，確保使用支援的預覽模型。
   const modelsToTry = [
+    'gemini-2.5-flash-preview-09-2025', // 環境強制支援之模型
     'gemini-2.5-flash',
     'gemini-2.0-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro-latest',
-    'gemini-pro'
+    'gemini-1.5-flash-latest'
   ];
   
   const parts = [];
@@ -1356,15 +1357,12 @@ async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
   parts.push({ text: prompt });
 
   const payload = {
-      contents: [{ parts: parts }]
+      contents: [{ role: "user", parts: parts }]
   };
 
   let lastErrorMsg = '';
 
   for (const modelName of modelsToTry) {
-      // 舊版 gemini-pro (1.0) 不支援圖片解析，若有上傳圖片則跳過該模型
-      if (imageBase64 && modelName === 'gemini-pro') continue;
-
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       
       try {
@@ -1490,9 +1488,8 @@ async function generatePost() {
   } catch (err) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
     if (err.message === 'API_KEY_MISSING') {
-        errorMsg = '⚠️ 請先於右上角輸入有效的 Google API Key。';
+        errorMsg = '⚠️ 請先於右上角輸入有效的 Google API Key，或確認系統授權。';
     } else if (err.message) {
-        // 顯示具體錯誤，幫助除錯
         errorMsg = `⚠️ 生成失敗：${err.message}`;
     }
     document.getElementById('outputV1').innerHTML = `<div style="color:#E8956C;padding:20px;line-height:1.6">${errorMsg}</div>`;
@@ -1704,7 +1701,7 @@ const storiesData = [
 用水晶來補，是很多人在做的個人化選物方式。
 
 📩 私訊我你的生日，
-我幫你算空缺數 + 推薦適合的水晶組合。
+我幫你算空缺數 + 推薦適合水晶組合。
 
 完全免費，只需要你的生日 ✨`,
     copyB: `你這輩子，可能有幾個數字從來沒出現過。
@@ -1714,7 +1711,7 @@ const storiesData = [
 
 私訊我你的生日 🔢`,
     cta: '加問答框：「你的生命靈數是幾？」— 直接開啟諮詢對話',
-    tip: '生命靈數話題 2025 年流量極高，且每個人都好奇自己，私訊轉化率極高。'
+    tip: '生命靈數話題流量極高，且每個人都好奇自己，私訊轉化率極好。'
   },
   {
     id: 8, type: 'A', typeLabel: '日常開店', icon: '🧹',
@@ -1996,7 +1993,7 @@ async function generateStory() {
   } catch(e) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
     if (e.message === 'API_KEY_MISSING') {
-        errorMsg = '⚠️ 請先於右上角輸入有效的 Google API Key。';
+        errorMsg = '⚠️ 請先於右上角輸入有效的 Google API Key，或確認系統授權。';
     } else if (e.message) {
         errorMsg = `⚠️ 生成失敗：${e.message}`;
     }
