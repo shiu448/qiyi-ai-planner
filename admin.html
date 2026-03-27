@@ -167,7 +167,7 @@
   .modal-overlay.active { display: flex; }
   .modal-content {
     background: var(--dark2); border: 1px solid var(--border); border-radius: 16px;
-    width: 90%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;
+    width: 90%; max-width: 1000px; max-height: 90vh; display: flex; flex-direction: column;
     box-shadow: 0 20px 40px rgba(0,0,0,0.5);
   }
   .modal-header {
@@ -178,7 +178,7 @@
   .btn-close { background: none; border: none; color: var(--text-light); font-size: 24px; cursor: pointer; }
   .btn-close:hover { color: var(--cream); }
   .modal-body {
-    padding: 32px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    padding: 32px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 350px 1fr; gap: 32px;
   }
   @media(max-width: 768px) { .modal-body { grid-template-columns: 1fr; } }
   .modal-footer {
@@ -193,7 +193,7 @@
     padding: 12px 16px; color: var(--cream); font-size: 14px; font-family: inherit; transition: border-color .2s;
   }
   .form-control:focus { outline: none; border-color: var(--gold); }
-  textarea.form-control { resize: vertical; min-height: 200px; line-height: 1.6; }
+  textarea.form-control { resize: vertical; min-height: 320px; line-height: 1.6; }
   
   .datetime-row { display: flex; gap: 16px; }
   .datetime-row > div { flex: 1; }
@@ -243,22 +243,27 @@
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cal-day-label { text-align: center; font-size: 13px; color: var(--text-light); padding: 8px 0; font-weight: 500; }
   
-  /* 行事曆方格優化：固定高度與卷軸、週末背景區分 */
-  .cal-day { background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; min-height: 110px; max-height: 140px; overflow-y: auto; padding: 8px; transition: all .2s; display: flex; flex-direction: column; gap: 4px; }
+  /* 行事曆方格優化：固定高度與卷軸、週末背景區分、加上指標 */
+  .cal-day { background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; min-height: 110px; max-height: 140px; overflow-y: auto; padding: 8px; transition: all .2s; display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
   .cal-day:nth-child(7n+1), .cal-day:nth-child(7n) { background: rgba(61, 53, 48, 0.4); } /* 週末底色加深 */
   .cal-day::-webkit-scrollbar { width: 4px; }
   .cal-day::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .cal-day:hover { border-color: var(--gold); }
-  .cal-day.empty { opacity: 0.2; background: transparent; border-color: transparent; }
+  .cal-day:hover { border-color: var(--gold); background: var(--dark3); }
+  .cal-day.empty { opacity: 0.2; background: transparent; border-color: transparent; cursor: default; }
   .cal-day.today { border-color: var(--gold); background: var(--dark3); box-shadow: inset 0 0 0 1px var(--gold); }
-  .day-num { font-size: 13px; color: var(--text-light); margin-bottom: 4px; font-weight: 600; }
+  .day-num { font-size: 13px; color: var(--text-light); margin-bottom: 4px; font-weight: 600; pointer-events: none; }
   .day-num.today-num { color: var(--gold); }
   
   /* 貼文標籤優化 */
-  .cal-item { font-size: 11px; padding: 6px; border-radius: 4px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; transition: transform .1s; }
+  .cal-item { font-size: 11px; padding: 6px; border-radius: 4px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; transition: transform .1s; position: relative; z-index: 2; }
   .cal-item.sys-post { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
   .cal-item.admin-post { background: rgba(126,200,160,0.15); color: var(--success); border: 1px solid rgba(126,200,160,0.3); }
   .cal-item:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+  /* ── AI HELPER BOX ── */
+  .ai-box { background: rgba(201,168,76,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .ai-box-title { font-size: 14px; color: var(--gold); font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 </style>
 </head>
 <body>
@@ -326,7 +331,7 @@
     </div>
   </div>
 
-  <!-- VIEW: CALENDAR (Placeholder) -->
+  <!-- VIEW: CALENDAR -->
   <div id="view-calendar" class="view-section">
     <div class="page-header"><div class="page-title">視覺化行事曆</div></div>
     <div class="cal-header">
@@ -343,7 +348,17 @@
 
   <!-- VIEW: SETTINGS -->
   <div id="view-settings" class="view-section">
-    <div class="page-header"><div class="page-title">平台綁定設定</div></div>
+    <div class="page-header"><div class="page-title">平台綁定與系統設定</div></div>
+    
+    <div class="stat-card" style="margin-bottom: 24px;">
+      <h3 style="color: var(--gold); margin-bottom: 16px;">🤖 Google Gemini API 金鑰</h3>
+      <p style="color: var(--cream2); font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+        在後台使用「AI 自動生成排程貼文」功能時，需要有效的 API 金鑰。此設定會與企劃前台同步。
+      </p>
+      <input type="password" id="adminGoogleApiKey" class="form-control" style="max-width: 400px; margin-bottom: 12px;" placeholder="請輸入 Google API Key" onchange="localStorage.setItem('qiyi_api_key', this.value)">
+      <div style="font-size: 12px; color: var(--text-light);">* 金鑰僅會儲存在您的瀏覽器本地端 (Local Storage)，以確保安全。</div>
+    </div>
+
     <div class="stat-card">
       <h3 style="color: var(--gold); margin-bottom: 16px;">Meta API 授權狀態</h3>
       <p style="color: var(--cream2); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
@@ -376,14 +391,14 @@
       <button class="btn-close" onclick="closeEditor()">×</button>
     </div>
     <div class="modal-body">
-      <!-- 左側：圖片與平台 -->
+      <!-- 左側：圖片與平台設定 -->
       <div>
         <div class="form-group">
           <label class="form-label">貼文圖片 / 影片</label>
           <div class="img-upload-box" id="uploadBox">
             <input type="file" id="postImage" accept="image/*" onchange="handleImage(this)">
             <div style="font-size: 32px; margin-bottom: 12px; opacity: 0.7;">📸</div>
-            <div style="font-size: 13px; color: var(--text-light);">點擊上傳圖片 (建議 1080x1080)</div>
+            <div style="font-size: 13px; color: var(--text-light);">點擊上傳圖片 (建議 1080x1080)<br>上傳後，AI 也能讀取影像特徵！</div>
             <div class="preview-wrapper" id="previewWrapper">
               <img id="imagePreview" src="" alt="Preview">
               <button class="btn-remove-img" onclick="removeImage(event)">×</button>
@@ -426,15 +441,33 @@
         </div>
       </div>
 
-      <!-- 右側：文案內容 -->
+      <!-- 右側：AI 輔助與文案內容 -->
       <div>
         <div class="form-group">
           <label class="form-label">貼文主旨 / 內部標題 (僅供後台辨識)</label>
-          <input type="text" id="postTitle" class="form-control" placeholder="例：紫水晶介紹 (顧問版)">
+          <input type="text" id="postTitle" class="form-control" placeholder="例：藍珀展示 (共感版)">
         </div>
+
+        <!-- AI 輔助產生器區塊 -->
+        <div class="ai-box">
+          <div class="ai-box-title">✨ AI 貼文輔助產生器</div>
+          <div class="ai-grid">
+            <input type="text" id="aiCrystalName" class="form-control" placeholder="水晶品項名稱 (必填)" style="grid-column: span 2;">
+            <select id="aiStrategyType" class="form-control" style="grid-column: span 2;">
+              <option value="auto">✨ 不指定 (AI 隨選適當風格)</option>
+              <option value="empathy">🌀 狀態共感文 (從狀態切入，不推銷)</option>
+              <option value="consultant">💎 顧問式產品文 (先說適合誰，再推產品)</option>
+              <option value="knowledge">📖 真實案例 / 知識文 (分享故事或知識)</option>
+            </select>
+            <input type="text" id="aiEffect" class="form-control" placeholder="主打功效 / 狀態 (選填)">
+            <input type="text" id="aiHoliday" class="form-control" placeholder="節慶 / 趨勢 (選填)">
+          </div>
+          <button type="button" class="btn btn-primary" id="btnGenerateAdmin" style="width: 100%;" onclick="generateAdminPost()">✨ 依據策略自動生成 IG 排版文案</button>
+        </div>
+
         <div class="form-group">
           <label class="form-label">貼文內文 (支援 IG/FB 換行格式)</label>
-          <textarea id="postContent" class="form-control" placeholder="在此輸入您的貼文文案...&#10;&#10;可以使用 #騏藝逸品 等 Hashtag"></textarea>
+          <textarea id="postContent" class="form-control" placeholder="在此輸入您的貼文文案... 或是點擊上方使用 AI 生成。"></textarea>
         </div>
         <div class="form-group" style="margin-top: -10px;">
           <label class="form-label">首則留言 (選填，限 IG)</label>
@@ -489,7 +522,7 @@
 let posts = [];
 const STORAGE_KEY = 'qiyi_scheduled_posts';
 
-// 前台預設的企劃貼文資料 (加入完整文案以便點擊預覽)
+// 系統預設企劃貼文資料 (與前台同步)
 const systemPosts = [
   {
     date: "2025-03-26",
@@ -595,10 +628,14 @@ function saveToStorage() {
 // ── INIT & RENDER ──
 function init() {
   loadPosts();
+  
+  // 載入 API Key 到設定欄位
+  const savedKey = localStorage.getItem('qiyi_api_key');
+  if (savedKey) document.getElementById('adminGoogleApiKey').value = savedKey;
+
   renderDashboard();
   renderAdminCalendar();
   
-  // Set default date to today for new posts
   document.getElementById('postDate').valueAsDate = new Date();
 }
 
@@ -607,14 +644,12 @@ function renderDashboard() {
   const emptyState = document.getElementById('emptyState');
   const table = document.querySelector('table');
   
-  // Stats
   let scheduled = 0, drafts = 0, published = 0;
   
-  // Sort posts by date/time
   posts.sort((a, b) => {
     const timeA = new Date(`${a.date}T${a.time}`).getTime();
     const timeB = new Date(`${b.date}T${b.time}`).getTime();
-    return timeB - timeA; // Descending (newest first)
+    return timeB - timeA; 
   });
 
   tbody.innerHTML = '';
@@ -627,18 +662,15 @@ function renderDashboard() {
     emptyState.style.display = 'none';
     
     posts.forEach(post => {
-      // Calculate stats
       if (post.status === 'scheduled') scheduled++;
       else if (post.status === 'draft') drafts++;
       else if (post.status === 'published') published++;
 
-      // Status Badge
       let badgeHTML = '';
       if (post.status === 'draft') badgeHTML = `<span class="badge badge-draft">📝 草稿</span>`;
       else if (post.status === 'scheduled') badgeHTML = `<span class="badge badge-scheduled">⏳ 待發布</span>`;
       else if (post.status === 'published') badgeHTML = `<span class="badge badge-published">✓ 已發布</span>`;
 
-      // Platform Icons
       const igIcon = `<span class="platform-icon ig-color ${post.platforms.includes('ig') ? 'active' : ''}">📸</span>`;
       const fbIcon = `<span class="platform-icon fb-color ${post.platforms.includes('fb') ? 'active' : ''}">📘</span>`;
 
@@ -666,7 +698,6 @@ function renderDashboard() {
     });
   }
 
-  // Update Stats UI
   document.getElementById('stat-scheduled').textContent = scheduled;
   document.getElementById('stat-drafts').textContent = drafts;
   document.getElementById('stat-published').textContent = published;
@@ -677,6 +708,11 @@ function openEditor() {
   resetForm();
   document.getElementById('modalTitle').textContent = '新增排程貼文';
   document.getElementById('editorModal').classList.add('active');
+}
+
+function openEditorWithDate(dateStr) {
+  openEditor();
+  document.getElementById('postDate').value = dateStr;
 }
 
 function closeEditor() {
@@ -694,7 +730,11 @@ function resetForm() {
   document.getElementById('platformIG').checked = true;
   document.getElementById('platformFB').checked = true;
   
-  // Image reset
+  document.getElementById('aiCrystalName').value = '';
+  document.getElementById('aiStrategyType').value = 'auto';
+  document.getElementById('aiEffect').value = '';
+  document.getElementById('aiHoliday').value = '';
+  
   document.getElementById('postImage').value = '';
   document.getElementById('imagePreview').src = '';
   document.getElementById('previewWrapper').style.display = 'none';
@@ -707,7 +747,6 @@ function handleImage(input) {
       document.getElementById('imagePreview').src = e.target.result;
       document.getElementById('previewWrapper').style.display = 'block';
     }
-    // Using Data URL to save in localStorage (Note: Avoid huge files in real app)
     reader.readAsDataURL(input.files[0]);
   }
 }
@@ -717,6 +756,161 @@ function removeImage(e) {
   document.getElementById('postImage').value = '';
   document.getElementById('imagePreview').src = '';
   document.getElementById('previewWrapper').style.display = 'none';
+}
+
+// ── AI POST GENERATOR (BACKEND) ──
+async function callGeminiAPI(prompt, imageBase64 = null, mimeType = null) {
+  const apiKey = localStorage.getItem('qiyi_api_key');
+  if (!apiKey) throw new Error('API_KEY_MISSING');
+
+  const modelsToTry = [
+    'gemini-2.5-flash-preview-09-2025',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-latest'
+  ];
+  
+  const parts = [];
+  if (imageBase64) {
+    parts.push({
+      inlineData: {
+        mimeType: mimeType || "image/jpeg",
+        data: imageBase64
+      }
+    });
+  }
+  parts.push({ text: prompt });
+
+  const payload = { contents: [{ role: "user", parts: parts }] };
+  let lastErrorMsg = '';
+
+  for (const modelName of modelsToTry) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      try {
+          const resp = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+          });
+          
+          if (!resp.ok) {
+              const errData = await resp.json().catch(() => ({}));
+              throw new Error(errData.error?.message || `HTTP error ${resp.status}`);
+          }
+          
+          const data = await resp.json();
+          if (data.candidates && data.candidates.length > 0) {
+              return data.candidates[0].content.parts[0].text;
+          } else {
+              throw new Error("API 回傳格式異常");
+          }
+      } catch (err) {
+          lastErrorMsg = err.message;
+          if (err.message.includes('API_KEY_INVALID') || err.message.includes('API key not valid')) {
+              throw new Error('API_KEY_MISSING');
+          }
+          if (err.message.includes('not found') || err.message.includes('not supported')) {
+              continue;
+          }
+          continue;
+      }
+  }
+  throw new Error(lastErrorMsg || "無法連接到 AI 伺服器");
+}
+
+async function generateAdminPost() {
+  const name = document.getElementById('aiCrystalName').value.trim();
+  if (!name) {
+      alert('⚠️ 請先輸入「水晶品項名稱」才能生成文案喔！');
+      return;
+  }
+
+  const strategyType = document.getElementById('aiStrategyType').value;
+  const effect = document.getElementById('aiEffect').value.trim();
+  const holiday = document.getElementById('aiHoliday').value.trim();
+  
+  const btn = document.getElementById('btnGenerateAdmin');
+  btn.disabled = true;
+  btn.textContent = '⏳ AI 寫作中，請稍候...';
+
+  // 取得圖片影像以便視覺分析
+  const imgSrc = document.getElementById('imagePreview').src;
+  let base64 = null, mime = null;
+  if (imgSrc && imgSrc.startsWith('data:image')) {
+      const parts = imgSrc.split(',');
+      mime = parts[0].match(/:(.*?);/)[1];
+      base64 = parts[1];
+  }
+
+  const brandContext = `你是「騏藝逸品 QIYI Crystal」的品牌社群文案寫手。
+品牌定位：「人生狀態顧問型水晶品牌」。
+核心理念：不是賣水晶，而是幫人整理當下狀態。
+目標客群：25-45歲女性，有壓力、有困惑、願意為讓自己好一點花錢。
+品牌語氣：有溫度、真誠、懂人心、不強推、先理解再建議。
+【法律鐵律】：文案絕對不可宣稱醫療或療效（如：治療失眠、抗憂鬱、治癒疾病、消除疼痛等），嚴格遵守台灣法規（如《醫療器材管理法》、《藥事法》）。水晶功效請轉化為「能量陪伴」、「頻率輔助」、「心靈感受」等靈性層面形容。`;
+
+  let strategyInstruction = "";
+  if (strategyType === "empathy") {
+      strategyInstruction = "重點切入：【狀態共感】。從「你最近怎麼了」的情緒出發，呼應狀態並給予理解，自然帶出水晶的陪伴。";
+  } else if (strategyType === "consultant") {
+      strategyInstruction = "重點切入：【顧問式產品】。明確指出這款水晶「適合什麼樣的人或狀態」，分析原因，展現專業但平易近人的顧問形象。";
+  } else if (strategyType === "knowledge") {
+      strategyInstruction = "重點切入：【真實案例 / 知識】。分享一個關於這款水晶的小知識、淨化方式，或虛構一個客人煩惱的真實案例，藉此帶出水晶價值。";
+  } else {
+      strategyInstruction = "重點切入：自動選擇最適合的發文策略（狀態共感、顧問式、或知識分享）。";
+  }
+
+  const mandatoryRules = `
+【排版與寫作鐵律（必須嚴格遵守）】：
+1. 視覺排版：必須極度適合 IG 閱讀，強制多換行、多留白（每段最多1-2句話，段與段之間必須有空白行隔開），【極度重要】一行最多24個字元，超過請務必斷句換行，絕對不可出現密集文字區塊。【禁止句末標點】：斷行與句尾「絕對不要」使用任何標點符號（如逗號、句號、驚嘆號等），請直接以換行或空格取代，營造空靈純淨感。
+2. 結構模版：請嚴格參考以下範例格式進行創作（必須包含「寓意」與「特色」的條列，並使用 ｜ 與 ꔛ 分隔）：
+   [開頭詩意提問/痛點共感 🕯️]
+   [描述畫面與情境 🌳]
+   
+   🧘‍♂️ 寓意 ｜ [狀態1] ꔛ [狀態2] ꔛ [靈魂/心理狀態描述]
+   ✨ 特色 ｜ [物理特色1] ꔛ [物理特色2] ꔛ [觸感/光澤描述]
+   
+   [中段：將水晶的物理特質與人生的成熟、內斂或特定狀態做深刻的連結 ✨]
+   [哲理金句總結]
+   
+3. 行動呼籲 (Action/CTA) 與私域流量：必須包含引導標記朋友 (促發 UGC 與 Repost，例如「標記那位像...一樣的朋友」) 或是引導私訊 (建立 DM 私域流量，例如「私訊小編...尋找與你頻率交織的...」)。語氣要趣味、甜美帶親切。請搭配 ⟡₊˚ 或 ꕀ 等精緻文字符號。
+4. IG SEO：在文案中自然流暢地融入水晶名稱、狀態痛點、台中水晶等搜尋關鍵字，以提升曝光。
+5. Hashtag 嚴格排序：底部標籤必須完全依序為：#${name} #騏藝逸品 #台中水晶店 #人生狀態的選物店 #[其他相關標籤1] #[其他相關標籤2]`;
+
+  const aidmaInstruction = `
+【文案結構要求：嚴格遵循 AIDMA 心理學消費模型】
+1. Attention (引起注意)：用破題金句或充滿詩意的畫面瞬間抓住眼球。
+2. Interest (引起興趣)：利用上述的「寓意 ｜...」與「特色 ｜...」精緻排版，展示水晶魅力。
+3. Desire (激發慾望)：帶出水晶能量如何成為解方，描繪擁有它之後的美好狀態改變。
+4. Memory (加深記憶)：給予一句有溫度、有質感的品牌記憶點（金句）。
+5. Action (促使行動)：溫馨甜美地引導私訊（DM）或標記朋友（UGC）。`;
+
+  const prompt = `${brandContext}
+${strategyInstruction}
+${mandatoryRules}
+${aidmaInstruction}
+
+水晶品項：${name}
+功效/狀態：${effect}
+${holiday ? '結合節日/趨勢：' + holiday : ''}
+${base64 ? '（請根據隨附的這張水晶圖片的視覺特徵，將細節融入文案中）' : ''}
+
+請直接輸出貼文內容，完全不要任何說明文字。`;
+
+  try {
+      const result = await callGeminiAPI(prompt, base64, mime);
+      document.getElementById('postContent').value = result;
+      showToast('✨ AI 文案生成成功！');
+  } catch (e) {
+      if (e.message === 'API_KEY_MISSING') {
+          alert('⚠️ 請先於左側「平台綁定設定」輸入有效的 Google API Key。');
+      } else {
+          alert(`⚠️ 生成失敗：${e.message}`);
+      }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ 依據策略自動生成 IG 排版文案';
 }
 
 // ── CRUD OPERATIONS ──
@@ -758,7 +952,10 @@ function savePost() {
   renderDashboard();
   renderAdminCalendar();
   closeEditor();
-  showToast('貼文設定已儲存！');
+  
+  // 儲存後自動切換至「視覺化行事曆」視圖
+  switchView('calendar');
+  showToast('貼文設定已儲存於行事曆！');
 }
 
 function editPost(id) {
@@ -832,7 +1029,6 @@ function closeViewModal() {
   document.getElementById('viewPostModal').classList.remove('active');
 }
 
-// 點擊背景關閉預覽 Modal
 document.getElementById('viewPostModal').addEventListener('click', function(e) {
   if (e.target === this) {
     closeViewModal();
@@ -861,27 +1057,24 @@ function renderAdminCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${adminCalYear}-${String(adminCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     
-    // 找出這天的系統預設貼文
     const sysPostsForDay = systemPosts.filter(p => p.date === dateStr);
-    // 找出這天的後台自訂貼文
     const adminPostsForDay = posts.filter(p => p.date === dateStr);
     
     const isToday = today.getFullYear()===adminCalYear && today.getMonth()===adminCalMonth && today.getDate()===d;
     
     let inner = `<div class="day-num ${isToday?'today-num':''}">${d}</div>`;
     
-    // 渲染系統貼文 (加上點擊預覽事件)
     sysPostsForDay.forEach(sp => {
-      inner += `<div class="cal-item sys-post" title="點擊檢視文案" onclick="viewSystemPost('${sp.date}')">📌 ${sp.title}</div>`;
+      inner += `<div class="cal-item sys-post" title="點擊檢視文案" onclick="event.stopPropagation(); viewSystemPost('${sp.date}')">📌 ${sp.title}</div>`;
     });
     
-    // 渲染後台貼文 (加上點擊編輯事件)
     adminPostsForDay.forEach(ap => {
       const statusIcon = ap.status === 'published' ? '✓' : '⏳';
-      inner += `<div class="cal-item admin-post" title="點擊編輯內容" onclick="editPost('${ap.id}')">${statusIcon} ${ap.title}</div>`;
+      inner += `<div class="cal-item admin-post" title="點擊編輯內容" onclick="event.stopPropagation(); editPost('${ap.id}')">${statusIcon} ${ap.title}</div>`;
     });
 
-    grid.innerHTML += `<div class="cal-day ${isToday?'today':''}">${inner}</div>`;
+    // 點擊格子空白處即可直接新增當日排程
+    grid.innerHTML += `<div class="cal-day ${isToday?'today':''}" onclick="openEditorWithDate('${dateStr}')" title="點擊新增貼文">${inner}</div>`;
   }
 }
 
@@ -890,11 +1083,14 @@ function adminNextMonth() { adminCalMonth++; if(adminCalMonth>11){adminCalMonth=
 
 // ── NAVIGATION & UI ──
 function switchView(viewId) {
-  // Update Nav
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  // 自動對應左側選單的 Active 狀態
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(el => el.classList.remove('active'));
+  
+  if(viewId === 'overview') navItems[0].classList.add('active');
+  if(viewId === 'calendar') navItems[1].classList.add('active');
+  if(viewId === 'settings') navItems[2].classList.add('active');
 
-  // Update Sections
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + viewId).classList.add('active');
 }
@@ -906,14 +1102,12 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// 關閉 Modal (點擊背景)
 document.getElementById('editorModal').addEventListener('click', function(e) {
   if (e.target === this) {
     closeEditor();
   }
 });
 
-// 啟動系統
 window.onload = init;
 
 </script>
