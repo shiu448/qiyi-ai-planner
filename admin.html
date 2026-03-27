@@ -398,9 +398,9 @@
           <div class="img-upload-box" id="uploadBox">
             <input type="file" id="postImage" accept="image/*" onchange="handleImage(this)">
             <div style="font-size: 32px; margin-bottom: 12px; opacity: 0.7;">📸</div>
-            <div style="font-size: 13px; color: var(--text-light);">點擊上傳圖片 (建議 1080x1080)<br>上傳後，AI 也能讀取影像特徵！</div>
+            <div style="font-size: 13px; color: var(--text-light);">點擊上傳圖片 (會自動壓縮優化)<br>上傳後，AI 也能讀取影像特徵！</div>
             <div class="preview-wrapper" id="previewWrapper">
-              <img id="imagePreview" src="" alt="Preview">
+              <img id="imagePreview" alt="Preview">
               <button class="btn-remove-img" onclick="removeImage(event)">×</button>
             </div>
           </div>
@@ -622,7 +622,14 @@ function loadPosts() {
 }
 
 function saveToStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    return true;
+  } catch (e) {
+    console.error("Storage error:", e);
+    alert("⚠️ 儲存失敗：儲存空間已滿。這通常是因為上傳了檔案過大的圖片。系統已自動處理壓縮，但如果還是失敗，請嘗試移除圖片後再試一次！");
+    return false;
+  }
 }
 
 // ── INIT & RENDER ──
@@ -736,7 +743,7 @@ function resetForm() {
   document.getElementById('aiHoliday').value = '';
   
   document.getElementById('postImage').value = '';
-  document.getElementById('imagePreview').src = '';
+  document.getElementById('imagePreview').removeAttribute('src');
   document.getElementById('previewWrapper').style.display = 'none';
 }
 
@@ -744,8 +751,36 @@ function handleImage(input) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      document.getElementById('imagePreview').src = e.target.result;
-      document.getElementById('previewWrapper').style.display = 'block';
+      // 圖片壓縮邏輯，避免 localStorage 爆掉
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        // 壓縮成 60% 品質的 JPEG
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+        document.getElementById('imagePreview').setAttribute('src', compressedDataUrl);
+        document.getElementById('previewWrapper').style.display = 'block';
+      };
+      img.src = e.target.result;
     }
     reader.readAsDataURL(input.files[0]);
   }
@@ -754,7 +789,7 @@ function handleImage(input) {
 function removeImage(e) {
   e.stopPropagation();
   document.getElementById('postImage').value = '';
-  document.getElementById('imagePreview').src = '';
+  document.getElementById('imagePreview').removeAttribute('src');
   document.getElementById('previewWrapper').style.display = 'none';
 }
 
@@ -834,7 +869,7 @@ async function generateAdminPost() {
   btn.textContent = '⏳ AI 寫作中，請稍候...';
 
   // 取得圖片影像以便視覺分析
-  const imgSrc = document.getElementById('imagePreview').src;
+  const imgSrc = document.getElementById('imagePreview').getAttribute('src');
   let base64 = null, mime = null;
   if (imgSrc && imgSrc.startsWith('data:image')) {
       const parts = imgSrc.split(',');
@@ -901,6 +936,14 @@ ${base64 ? '（請根據隨附的這張水晶圖片的視覺特徵，將細節�
   try {
       const result = await callGeminiAPI(prompt, base64, mime);
       document.getElementById('postContent').value = result;
+      
+      // 自動幫忙填入主旨（如果為空）
+      const titleInput = document.getElementById('postTitle');
+      if (!titleInput.value.trim()) {
+          const strategyText = document.getElementById('aiStrategyType').options[document.getElementById('aiStrategyType').selectedIndex].text.split(' ')[1] || 'AI排程';
+          titleInput.value = `${name} - ${strategyText}`;
+      }
+
       showToast('✨ AI 文案生成成功！');
   } catch (e) {
       if (e.message === 'API_KEY_MISSING') {
@@ -921,7 +964,8 @@ function savePost() {
   const content = document.getElementById('postContent').value.trim();
   
   if (!title) {
-    alert("請輸入貼文主旨！");
+    alert("⚠️ 請輸入「貼文主旨」以識別此篇排程貼文！");
+    document.getElementById('postTitle').focus();
     return;
   }
 
@@ -930,6 +974,8 @@ function savePost() {
   if(document.getElementById('platformFB').checked) platforms.push('fb');
 
   const dateVal = document.getElementById('postDate').value;
+  const imgSrc = document.getElementById('imagePreview').getAttribute('src');
+
   const postData = {
     id: id,
     title: title,
@@ -939,15 +985,21 @@ function savePost() {
     time: document.getElementById('postTime').value,
     status: document.getElementById('postStatus').value,
     platforms: platforms,
-    image: document.getElementById('imagePreview').src || null,
+    image: imgSrc && imgSrc.startsWith('data:image') ? imgSrc : null,
     updatedAt: new Date().toISOString()
   };
 
   const existingIndex = posts.findIndex(p => p.id === id);
+  let backupPosts = [...posts];
   if (existingIndex >= 0) {
     posts[existingIndex] = postData;
   } else {
     posts.push(postData);
+  }
+
+  if (!saveToStorage()) {
+    posts = backupPosts;
+    return; // 中止儲存流程，不要關閉視窗
   }
 
   // 自動切換日曆月份到該貼文的日期
@@ -959,7 +1011,6 @@ function savePost() {
     }
   }
 
-  saveToStorage();
   renderDashboard();
   renderAdminCalendar(); // 重新渲染確保月份與資料正確
   closeEditor();
@@ -986,10 +1037,10 @@ function editPost(id) {
   document.getElementById('platformFB').checked = post.platforms.includes('fb');
 
   if (post.image) {
-    document.getElementById('imagePreview').src = post.image;
+    document.getElementById('imagePreview').setAttribute('src', post.image);
     document.getElementById('previewWrapper').style.display = 'block';
   } else {
-    document.getElementById('imagePreview').src = '';
+    document.getElementById('imagePreview').removeAttribute('src');
     document.getElementById('previewWrapper').style.display = 'none';
   }
 
@@ -1020,8 +1071,9 @@ function mockPublish(id) {
 }
 
 // ── CALENDAR ──
-let adminCalYear = new Date().getFullYear();
-let adminCalMonth = new Date().getMonth();
+const todayObj = new Date();
+let adminCalYear = todayObj.getFullYear();
+let adminCalMonth = todayObj.getMonth();
 
 function viewSystemPost(dateStr) {
   const post = systemPosts.find(p => p.date === dateStr);
