@@ -119,17 +119,23 @@
     background: var(--dark2);
     border: 1px solid var(--border);
     border-radius: 8px;
-    min-height: 90px;
+    min-height: 100px;
+    max-height: 140px;
+    overflow-y: auto;
     padding: 8px;
     cursor: pointer;
     transition: all .2s;
     position: relative;
+    display: flex;
+    flex-direction: column;
   }
+  .cal-day::-webkit-scrollbar { width: 4px; }
+  .cal-day::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .cal-day:hover { border-color: var(--gold); background: var(--dark3); }
   .cal-day.today { border-color: var(--gold); }
   .cal-day.has-post { background: linear-gradient(135deg, var(--dark2), #2A2015); }
-  .cal-day.empty { opacity: 0.2; cursor: default; }
-  .cal-day.empty:hover { border-color: var(--border); background: var(--dark2); }
+  .cal-day.empty { opacity: 0.2; cursor: default; background: transparent; border-color: transparent; }
+  .cal-day.empty:hover { border-color: transparent; background: transparent; }
   .day-num { font-size: 12px; color: var(--text-light); margin-bottom: 4px; font-weight: 600; }
   .day-num.today-num { color: var(--gold); }
   .day-tag {
@@ -139,13 +145,17 @@
     margin-top: 3px;
     display: inline-block;
     font-weight: 500;
+    align-self: flex-start;
   }
   .tag-consult { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
   .tag-holiday { background: rgba(139,69,19,0.2); color: #E8956C; border: 1px solid rgba(139,69,19,0.3); }
   .tag-crystal { background: rgba(107,76,138,0.2); color: #C4A0E8; border: 1px solid rgba(107,76,138,0.3); }
   .tag-trend { background: rgba(58,107,76,0.2); color: #7EC8A0; border: 1px solid rgba(58,107,76,0.3); }
+  .tag-admin { background: rgba(126,200,160,0.15); color: #7EC8A0; border: 1px solid rgba(126,200,160,0.3); }
   .day-preview { font-size: 9px; color: var(--text-light); margin-top: 4px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .post-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); position: absolute; top: 8px; right: 8px; }
+  .post-dot-container { position: absolute; top: 8px; right: 8px; display: flex; gap: 3px; }
+  .post-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .post-dot.admin { background: #7EC8A0; }
 
   /* ── POST CARDS ── */
   .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
@@ -1250,20 +1260,47 @@ function renderCalendar() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const today = new Date();
 
+  let adminPosts = [];
+  try {
+    const saved = localStorage.getItem('qiyi_scheduled_posts');
+    if (saved) adminPosts = JSON.parse(saved);
+  } catch(e) {}
+
   for (let i = 0; i < firstDay; i++) {
     grid.innerHTML += `<div class="cal-day empty"></div>`;
   }
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const post = postData.find(p => p.date === dateStr);
+    
+    const sysPosts = postData.filter(p => p.date === dateStr);
+    const customPosts = adminPosts.filter(p => p.date === dateStr);
+    
     const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
+    
     let inner = `<div class="day-num ${isToday?'today-num':''}">${d}</div>`;
-    if (post) {
+    let dotsHTML = '';
+
+    sysPosts.forEach(post => {
       inner += `<div class="day-tag tag-${post.type}">${post.typeLabel}</div>`;
       inner += `<div class="day-preview">${post.title}</div>`;
-      inner += `<div class="post-dot"></div>`;
+      dotsHTML += `<div class="post-dot"></div>`;
+    });
+
+    customPosts.forEach(post => {
+      const statusText = post.status === 'published' ? '✓ 已發布' : '⏳ 後台排程';
+      inner += `<div class="day-tag tag-admin">${statusText}</div>`;
+      inner += `<div class="day-preview">${post.title || '未命名貼文'}</div>`;
+      dotsHTML += `<div class="post-dot admin"></div>`;
+    });
+
+    if (dotsHTML) {
+      inner += `<div class="post-dot-container">${dotsHTML}</div>`;
     }
-    grid.innerHTML += `<div class="cal-day ${isToday?'today':''} ${post?'has-post':''}" onclick="${post?`openPost('${post.date}')`:''}">
+
+    const hasPost = sysPosts.length > 0 || customPosts.length > 0;
+    const onclickAttr = sysPosts.length > 0 ? `onclick="openPost('${dateStr}')"` : '';
+
+    grid.innerHTML += `<div class="cal-day ${isToday?'today':''} ${hasPost?'has-post':''}" ${onclickAttr}>
       ${inner}
     </div>`;
   }
@@ -1438,7 +1475,6 @@ async function generatePost() {
 目標客群：25-45歲女性，有壓力、有困惑、願意為讓自己好一點花錢。
 品牌語氣：有溫度、真誠、懂人心、不強推、先理解再建議。
 【法律鐵律】：文案絕對不可宣稱醫療或療效（如：治療失眠、抗憂鬱、治癒疾病、消除疼痛等），嚴格遵守台灣法規（如《醫療器材管理法》、《藥事法》）。水晶功效請轉化為「能量陪伴」、「頻率輔助」、「心靈感受」等靈性層面形容。
-【排版鐵律】：文案排版必須調整成更適合在IG發布的行句和斷句，強制多換行、多留白（每段最多1-2句話，段與段之間必須有空白行隔開），絕對不可出現密集文字區塊。加一些質感 emoji (如🌙, ✨, 🤍, 🌿) 和文字符號 (如✦, ✧, 〰, ｜) 點綴，更能輕鬆閱讀。
 `;
 
   const holiday_txt = holiday ? `\n結合節日/趨勢：${holiday}` : '';
@@ -1548,6 +1584,10 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   document.querySelectorAll('.tab')[['calendar','posts','stories','generator','strategy'].indexOf(name)].classList.add('active');
+  
+  if (name === 'calendar') {
+    renderCalendar();
+  }
 }
 
 // ── STORIES DATA ──
