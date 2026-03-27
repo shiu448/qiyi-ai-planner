@@ -928,12 +928,13 @@ function savePost() {
   if(document.getElementById('platformIG').checked) platforms.push('ig');
   if(document.getElementById('platformFB').checked) platforms.push('fb');
 
+  const dateVal = document.getElementById('postDate').value;
   const postData = {
     id: id,
     title: title,
     content: content,
     comment: document.getElementById('postComment').value.trim(),
-    date: document.getElementById('postDate').value,
+    date: dateVal,
     time: document.getElementById('postTime').value,
     status: document.getElementById('postStatus').value,
     platforms: platforms,
@@ -948,9 +949,18 @@ function savePost() {
     posts.push(postData);
   }
 
+  // 自動切換日曆月份到該貼文的日期
+  if (dateVal) {
+    const parts = dateVal.split('-');
+    if (parts.length === 3) {
+      adminCalYear = parseInt(parts[0], 10);
+      adminCalMonth = parseInt(parts[1], 10) - 1;
+    }
+  }
+
   saveToStorage();
   renderDashboard();
-  renderAdminCalendar();
+  renderAdminCalendar(); // 重新渲染確保月份與資料正確
   closeEditor();
   
   // 儲存後自動切換至「視覺化行事曆」視圖
@@ -1009,7 +1019,8 @@ function mockPublish(id) {
 }
 
 // ── CALENDAR ──
-let adminCalYear = 2025, adminCalMonth = 2; // 0-indexed (March)
+let adminCalYear = new Date().getFullYear();
+let adminCalMonth = new Date().getMonth();
 
 function viewSystemPost(dateStr) {
   const post = systemPosts.find(p => p.date === dateStr);
