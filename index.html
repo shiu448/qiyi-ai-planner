@@ -472,6 +472,16 @@
         <div class="gen-panel-title">📷 上傳照片 & 輸入資訊</div>
 
         <div class="form-group">
+          <label class="form-label">發文策略類型</label>
+          <select class="form-select" id="postStrategyType">
+            <option value="auto">✨ 不指定 (AI 隨選適當風格)</option>
+            <option value="empathy">🌀 狀態共感文 (從狀態切入，不直接推產品)</option>
+            <option value="consultant">💎 顧問式產品文 (先說適合誰，再推產品)</option>
+            <option value="knowledge">📖 真實案例 / 知識文 (分享故事或水晶知識)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">水晶照片（選填）</label>
           <div class="upload-zone" id="uploadZone">
             <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(this)">
@@ -519,7 +529,7 @@
           <textarea class="form-textarea" id="extraNotes" placeholder="例：這款是限量款、適合送禮、目前特別推薦…"></textarea>
         </div>
 
-        <button class="btn-generate" id="genBtn" onclick="generatePost()">✨ 生成貼文（兩版）</button>
+        <button class="btn-generate" id="genBtn" onclick="generatePost()">✨ 生成貼文</button>
       </div>
     </div>
 
@@ -527,15 +537,7 @@
       <div class="gen-panel">
         <div class="gen-panel-title">📝 生成結果</div>
 
-        <div class="output-tabs">
-          <button class="output-tab active" id="tabV1btn" onclick="switchOutput('v1')">版本 A — 顧問型</button>
-          <button class="output-tab" id="tabV2btn" onclick="switchOutput('v2')">版本 B — 感性型</button>
-        </div>
-
         <div class="output-area" id="outputV1">
-          <div class="output-placeholder">填入左側資訊後，點「生成貼文」即可自動產出 ✨</div>
-        </div>
-        <div class="output-area" id="outputV2" style="display:none">
           <div class="output-placeholder">填入左側資訊後，點「生成貼文」即可自動產出 ✨</div>
         </div>
 
@@ -1321,8 +1323,7 @@ function renderPosts() {
 function escJs(s) { return s.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
 
 // ── AI GENERATOR ──
-let currentOutputTab = 'v1';
-let generatedV1 = '', generatedV2 = '';
+let generatedPostContent = '';
 let uploadedImageBase64 = null;
 let uploadedImageMimeType = null; // 儲存上傳圖片的類型
 
@@ -1417,74 +1418,87 @@ function handleImageUpload(input) {
   reader.readAsDataURL(file);
 }
 
-function switchOutput(tab) {
-  currentOutputTab = tab;
-  document.getElementById('outputV1').style.display = tab==='v1'?'block':'none';
-  document.getElementById('outputV2').style.display = tab==='v2'?'block':'none';
-  document.getElementById('tabV1btn').className = 'output-tab' + (tab==='v1'?' active':'');
-  document.getElementById('tabV2btn').className = 'output-tab' + (tab==='v2'?' active':'');
-}
-
 async function generatePost() {
   const name = document.getElementById('crystalName').value.trim();
   if (!name) { showToast('⚠️ 請先輸入水晶品項名稱'); return; }
 
+  const strategyType = document.getElementById('postStrategyType').value;
   const effect = document.getElementById('customEffect').value.trim() || document.getElementById('crystalEffect').value;
   const holiday = document.getElementById('holidayTag').value;
   const extra = document.getElementById('extraNotes').value.trim();
 
   document.getElementById('genBtn').disabled = true;
 
-  const loadingV1 = `<div style="text-align:center;padding:60px 0"><div style="color:var(--text-light);font-size:13px;margin-bottom:12px">正在生成版本 A…</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
-  const loadingV2 = `<div style="text-align:center;padding:60px 0"><div style="color:var(--text-light);font-size:13px;margin-bottom:12px">正在生成版本 B…</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+  const loadingV1 = `<div style="text-align:center;padding:60px 0"><div style="color:var(--text-light);font-size:13px;margin-bottom:12px">正在依據您的策略生成專屬貼文…</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
   document.getElementById('outputV1').innerHTML = loadingV1;
-  document.getElementById('outputV2').innerHTML = loadingV2;
 
   const brandContext = `你是「騏藝逸品 QIYI Crystal」的品牌社群文案寫手。
 品牌定位：「人生狀態顧問型水晶品牌」。
 核心理念：不是賣水晶，而是幫人整理當下狀態。
 目標客群：25-45歲女性，有壓力、有困惑、願意為讓自己好一點花錢。
 品牌語氣：有溫度、真誠、懂人心、不強推、先理解再建議。
+【法律鐵律】：文案絕對不可宣稱醫療或療效（如：治療失眠、抗憂鬱、治癒疾病、消除疼痛等），嚴格遵守台灣法規（如《醫療器材管理法》、《藥事法》）。水晶功效請轉化為「能量陪伴」、「頻率輔助」、「心靈感受」等靈性層面形容。
+【排版鐵律】：文案排版必須調整成更適合在IG發布的行句和斷句，強制多換行、多留白（每段最多1-2句話，段與段之間必須有空白行隔開），絕對不可出現密集文字區塊。加一些質感 emoji (如🌙, ✨, 🤍, 🌿) 和文字符號 (如✦, ✧, 〰, ｜) 點綴，更能輕鬆閱讀。
 `;
 
   const holiday_txt = holiday ? `\n結合節日/趨勢：${holiday}` : '';
   const extra_txt = extra ? `\n補充說明：${extra}` : '';
   const image_txt = uploadedImageBase64 ? '\n（請根據隨附的這張水晶圖片的視覺特徵，將細節融入文案中）' : '';
 
-  const promptV1 = `${brandContext}
-請寫一篇【顧問型】IG/FB 貼文，格式要求：
-1. 開頭從「客人的狀態/問題」切入（不要直接說水晶）
-2. 中段給出顧問建議邏輯（為什麼這顆適合這個狀態）
-3. 最後自然帶出品項，並邀請私訊或來店
-4. 字數 150-250 字，自然口語，有換行節奏感
-5. 結尾加上3-5個適合的 hashtag
+  let strategyInstruction = "";
+  if (strategyType === "empathy") {
+      strategyInstruction = "重點切入：【狀態共感】。從「你最近怎麼了」的情緒出發，呼應狀態並給予理解，自然帶出水晶的陪伴。";
+  } else if (strategyType === "consultant") {
+      strategyInstruction = "重點切入：【顧問式產品】。明確指出這款水晶「適合什麼樣的人或狀態」，分析原因，展現專業但平易近人的顧問形象。";
+  } else if (strategyType === "knowledge") {
+      strategyInstruction = "重點切入：【真實案例 / 知識】。分享一個關於這款水晶的小知識、淨化方式，或虛構一個客人煩惱的真實案例，藉此帶出水晶價值。";
+  } else {
+      strategyInstruction = "重點切入：自動選擇最適合的發文策略（狀態共感、顧問式、或知識分享）。";
+  }
+
+  const mandatoryRules = `
+【排版與寫作鐵律（必須嚴格遵守）】：
+1. 視覺排版：必須極度適合 IG 閱讀，強制多換行、多留白（每段最多1-2句話，段與段之間必須有空白行隔開），【極度重要】一行最多24個字元，超過請務必斷句換行，絕對不可出現密集文字區塊。【禁止句末標點】：斷行與句尾「絕對不要」使用任何標點符號（如逗號、句號、驚嘆號等），請直接以換行或空格取代，營造空靈純淨感。
+2. 結構模版：請嚴格參考以下範例格式進行創作（必須包含「寓意」與「特色」的條列，並使用 ｜ 與 ꔛ 分隔）：
+   [開頭詩意提問/痛點共感 🕯️]
+   [描述畫面與情境 🌳]
+   
+   🧘‍♂️ 寓意 ｜ [狀態1] ꔛ [狀態2] ꔛ [靈魂/心理狀態描述]
+   ✨ 特色 ｜ [物理特色1] ꔛ [物理特色2] ꔛ [觸感/光澤描述]
+   
+   [中段：將水晶的物理特質與人生的成熟、內斂或特定狀態做深刻的連結 ✨]
+   [哲理金句總結]
+   
+3. 行動呼籲 (Action/CTA) 與私域流量：必須包含引導標記朋友 (促發 UGC 與 Repost，例如「標記那位像...一樣的朋友」) 或是引導私訊 (建立 DM 私域流量，例如「私訊小編...尋找與你頻率交織的...」)。語氣要趣味、甜美帶親切。請搭配 ⟡₊˚ 或 ꕀ 等精緻文字符號。
+4. IG SEO：在文案中自然流暢地融入水晶名稱、狀態痛點、台中水晶等搜尋關鍵字，以提升曝光。
+5. Hashtag 嚴格排序：底部標籤必須完全依序為：#${name || '水晶'} #騏藝逸品 #台中水晶店 #人生狀態的選物店 #[其他相關標籤1] #[其他相關標籤2]
+`;
+
+  const aidmaInstruction = `
+【文案結構要求：嚴格遵循 AIDMA 心理學消費模型】
+1. Attention (引起注意)：用破題金句或充滿詩意的畫面瞬間抓住眼球。
+2. Interest (引起興趣)：利用上述的「寓意 ｜...」與「特色 ｜...」精緻排版，展示水晶魅力。
+3. Desire (激發慾望)：帶出水晶能量如何成為解方，描繪擁有它之後的美好狀態改變。
+4. Memory (加深記憶)：給予一句有溫度、有質感的品牌記憶點（金句）。
+5. Action (促使行動)：溫馨甜美地引導私訊（DM）或標記朋友（UGC）。
+`;
+
+  const prompt = `${brandContext}
+${strategyInstruction}
+
+${mandatoryRules}
+
+${aidmaInstruction}
 
 水晶品項：${name}
 功效/狀態：${effect}${holiday_txt}${extra_txt}${image_txt}
 
-請直接輸出貼文內容，不要任何說明文字。`;
-
-  const promptV2 = `${brandContext}
-請寫一篇【感性共鳴型】IG/FB 貼文，格式要求：
-1. 開頭用情緒/感受切入（不是問句就是一個畫面）
-2. 中段用文學性語言描述水晶帶來的感受
-3. 不強調功效，強調「陪伴感」和「情緒連結」
-4. 字數 100-180 字，短句多、有詩意、留白感
-5. 結尾加上3-5個適合的 hashtag
-
-水晶品項：${name}
-功效/狀態：${effect}${holiday_txt}${extra_txt}${image_txt}
-
-請直接輸出貼文內容，不要任何說明文字。`;
+請直接輸出貼文內容，完全不要任何說明文字。`;
 
   try {
-    const [v1, v2] = await Promise.all([
-        callGeminiAPI(promptV1, uploadedImageBase64, uploadedImageMimeType), 
-        callGeminiAPI(promptV2, uploadedImageBase64, uploadedImageMimeType)
-    ]);
-    generatedV1 = v1; generatedV2 = v2;
-    document.getElementById('outputV1').innerText = v1;
-    document.getElementById('outputV2').innerText = v2;
+    const result = await callGeminiAPI(prompt, uploadedImageBase64, uploadedImageMimeType);
+    generatedPostContent = result;
+    document.getElementById('outputV1').innerText = result;
   } catch (err) {
     let errorMsg = '⚠️ 生成失敗，請檢查 API Key 或稍後再試。';
     if (err.message === 'API_KEY_MISSING') {
@@ -1493,7 +1507,6 @@ async function generatePost() {
         errorMsg = `⚠️ 生成失敗：${err.message}`;
     }
     document.getElementById('outputV1').innerHTML = `<div style="color:#E8956C;padding:20px;line-height:1.6">${errorMsg}</div>`;
-    document.getElementById('outputV2').innerHTML = `<div style="color:#E8956C;padding:20px;line-height:1.6">${errorMsg}</div>`;
   }
   document.getElementById('genBtn').disabled = false;
 }
@@ -1503,9 +1516,8 @@ async function regenerate() {
 }
 
 function copyOutput() {
-  const text = currentOutputTab === 'v1' ? generatedV1 : generatedV2;
-  if (!text) return;
-  copyText(text);
+  if (!generatedPostContent) return;
+  copyText(generatedPostContent);
 }
 
 // ── UTILS ──
@@ -1963,7 +1975,11 @@ async function generateStory() {
   const brand = `你是「騏藝逸品 QIYI Crystal」的限時動態文案寫手。
 品牌定位：人生狀態顧問型水晶品牌。
 語氣：溫暖、真誠、有質感，不強銷，先理解再建議。
-限動格式要求：字數短（50-120字），短句多，每行不超過25字，有換行節奏，結尾適當 emoji（1-2個即可）。
+【法律鐵律】：絕對不可宣稱療效或牽涉醫療行為（如治失眠、抗憂鬱等），嚴格遵守台灣《醫療器材管理法》。請用「陪伴」、「能量支持」、「頻率」來形容水晶。
+【行銷鐵律】：文案須符合 AIDMA 模型。善用互動貼圖或標記機制引發 UGC，並強烈引導私訊（建立 DM 私域流量）。在自然語句中置入關鍵字（IG SEO）。
+【排版鐵律】：文案排版必須調整成更適合在IG發布的行句和斷句，強制換行留白，句子極短（【極度重要】一行最多24個字元），絕對不可出現密集文字塊。【禁止句末標點】：斷行與句尾「絕對不要」使用任何標點符號（如逗號、句號、驚嘆號等），請直接換行取代。加一些質感 emoji 與文字符號 (如✦, ✧, ꔛ, ｜) 點綴，更能輕鬆閱讀。
+【重要】結尾的 CTA (引導行動) 要帶點趣味、甜美與親切感，像閨蜜般邀請互動，並搭配 ⟡₊˚ 或 ꕀ 等符號（如：「想摸摸它本人嗎？私訊小編呀 ꕀ ✨」、「選不出來的話，小盒子等妳來聊聊 ⟡₊˚ 🤍」）。
+限動格式要求：字數短（50-120字），短句多，一行最多24個字元，有換行節奏，結尾適當 emoji（1-2個即可）。
 不要加 hashtag，限動不需要。`;
 
   const itemTxt = item ? `\n主打品項：${item}` : '';
