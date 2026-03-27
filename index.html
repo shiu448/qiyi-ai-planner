@@ -152,6 +152,9 @@
   .tag-crystal { background: rgba(107,76,138,0.2); color: #C4A0E8; border: 1px solid rgba(107,76,138,0.3); }
   .tag-trend { background: rgba(58,107,76,0.2); color: #7EC8A0; border: 1px solid rgba(58,107,76,0.3); }
   .tag-admin { background: rgba(126,200,160,0.15); color: #7EC8A0; border: 1px solid rgba(126,200,160,0.3); }
+  .tag-draft { background: rgba(255,255,255,0.1); color: #bbb; border: 1px solid rgba(255,255,255,0.2); }
+  .tag-published { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  
   .day-preview { font-size: 9px; color: var(--text-light); margin-top: 4px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .post-dot-container { position: absolute; top: 8px; right: 8px; display: flex; gap: 3px; }
   .post-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
@@ -879,7 +882,7 @@
 // ── DATA ──
 const postData = [
   {
-    date: "2025-03-26",
+    date: "2026-03-26",
     type: "consult",
     typeLabel: "顧問型",
     title: "為什麼你買了很多水晶，但感覺還是沒變？",
@@ -913,7 +916,7 @@ const postData = [
     hashtags: "#騏藝逸品 #QIYICrystal #水晶顧問 #水晶功效 #能量水晶 #穩住自己"
   },
   {
-    date: "2025-03-28",
+    date: "2026-03-28",
     type: "crystal",
     typeLabel: "水晶品項",
     title: "睡不好、心很散？這顆是你現在需要的",
@@ -944,10 +947,10 @@ const postData = [
     hashtags: "#騏藝逸品 #水晶推薦 #紫水晶 #睡眠 #情緒安定 #能量水晶 #台中水晶"
   },
   {
-    date: "2025-03-31",
+    date: "2026-03-31",
     type: "trend",
     typeLabel: "趨勢話題",
-    title: "2025 很多人在問我：生命靈數怎麼配水晶？",
+    title: "現在很多人在問我：生命靈數怎麼配水晶？",
     crystal: { emoji: "✨", name: "依生命靈數空缺數配對", why: "補強先天不足的能量面向，個人化搭配" },
     v1: `最近越來越多人來問我：
 
@@ -977,7 +980,7 @@ const postData = [
     hashtags: "#騏藝逸品 #QIYICrystal #生命靈數 #空缺數水晶 #客製水晶 #能量水晶 #水晶搭配"
   },
   {
-    date: "2025-04-03",
+    date: "2026-04-03",
     type: "holiday",
     typeLabel: "節日",
     title: "清明連假｜掃墓前後，幫自己做一個能量清理",
@@ -1011,7 +1014,7 @@ const postData = [
     hashtags: "#騏藝逸品 #清明 #水晶淨化 #能量清理 #水晶保養 #QIYICrystal"
   },
   {
-    date: "2025-04-07",
+    date: "2026-04-07",
     type: "consult",
     typeLabel: "顧問型",
     title: "你不是運氣不好，是狀態跑掉了",
@@ -1049,7 +1052,7 @@ const postData = [
     hashtags: "#騏藝逸品 #QIYICrystal #黃水晶 #打開運勢 #事業財運 #水晶功效 #水晶推薦"
   },
   {
-    date: "2025-04-11",
+    date: "2026-04-11",
     type: "crystal",
     typeLabel: "水晶品項",
     title: "春天換季，情緒也在換季",
@@ -1082,7 +1085,7 @@ const postData = [
     hashtags: "#騏藝逸品 #春天水晶 #玫瑰石英 #月光石 #換季情緒 #能量水晶 #水晶推薦"
   },
   {
-    date: "2025-04-14",
+    date: "2026-04-14",
     type: "consult",
     typeLabel: "顧問型",
     title: "想招桃花？先問自己一個問題",
@@ -1113,7 +1116,7 @@ const postData = [
     hashtags: "#騏藝逸品 #粉晶 #草莓晶 #桃花水晶 #感情運 #關係升溫 #愛自己 #QIYICrystal"
   },
   {
-    date: "2025-04-18",
+    date: "2026-04-18",
     type: "crystal",
     typeLabel: "水晶品項",
     title: "辦公桌上放這個，工作狀態直接升級",
@@ -1147,7 +1150,7 @@ const postData = [
     hashtags: "#騏藝逸品 #黃水晶 #辦公桌水晶 #招財水晶 #工作運 #事業財運 #QIYICrystal"
   },
   {
-    date: "2025-04-22",
+    date: "2026-04-22",
     type: "holiday",
     typeLabel: "節日",
     title: "世界地球日｜每一顆水晶，都是大地給的禮物",
@@ -1174,11 +1177,11 @@ const postData = [
 
 有沒有覺得，這本身就是一件很神奇的事？
 
-謝謝大地，謝謝那些默默陪著我們的石頭。`,
+謝謝大地，謝謝那些默默陪著集的石頭。`,
     hashtags: "#騏藝逸品 #世界地球日 #地球日 #天然水晶 #礦石 #QIYICrystal #WorldEarthDay"
   },
   {
-    date: "2025-04-25",
+    date: "2026-04-25",
     type: "consult",
     typeLabel: "顧問型",
     title: "給正在考慮送媽媽什麼的你",
@@ -1210,7 +1213,7 @@ const postData = [
     hashtags: "#騏藝逸品 #母親節 #母親節禮物 #水晶禮盒 #送禮水晶 #QIYICrystal #玫瑰石英"
   },
   {
-    date: "2025-04-28",
+    date: "2026-04-28",
     type: "trend",
     typeLabel: "趨勢話題",
     title: "想重新開始的人，從這裡看",
@@ -1245,7 +1248,8 @@ const postData = [
 ];
 
 // ── CALENDAR ──
-let currentYear = 2025, currentMonth = 2; // 0-indexed
+const todayObj = new Date();
+let currentYear = todayObj.getFullYear(), currentMonth = todayObj.getMonth();
 
 function renderCalendar() {
   const label = document.getElementById('monthLabel');
@@ -1287,8 +1291,16 @@ function renderCalendar() {
     });
 
     customPosts.forEach(post => {
-      const statusText = post.status === 'published' ? '✓ 已發布' : '⏳ 後台排程';
-      inner += `<div class="day-tag tag-admin">${statusText}</div>`;
+      let statusText = '⏳ 待發布';
+      let tagClass = 'tag-admin';
+      if (post.status === 'published') {
+        statusText = '✓ 已發布';
+        tagClass = 'tag-published';
+      } else if (post.status === 'draft') {
+        statusText = '📝 草稿';
+        tagClass = 'tag-draft';
+      }
+      inner += `<div class="day-tag ${tagClass}">${statusText}</div>`;
       inner += `<div class="day-preview">${post.title || '未命名貼文'}</div>`;
       dotsHTML += `<div class="post-dot admin"></div>`;
     });
